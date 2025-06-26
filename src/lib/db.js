@@ -42,6 +42,39 @@ export const taskDatabase = {
 			throw error;
 		}
 	},
+	async addReport(report) {
+		try {
+			// get the database instance
+			const db = await getDb();
+
+			const now = new Date().toISOString();
+			const doc = {
+				_id: now + '-' + Math.random().toString(36).slice(2),
+				type: 'report',
+				title: report.title,
+				description: report.description,
+				reportType: report.reportType,
+				location: report.location,
+				assignedTo: report.assignedTo || null,
+				priority: report.priority || 'medium',
+				status: report.status || 'draft',
+				dueDate: report.dueDate || null,
+				materials: report.materials || null,
+				findings: report.findings || null,
+				recommendations: report.recommendations || null,
+				createdAt: now,
+				updatedAt: now,
+				createdBy: 'admin'
+			};
+
+			const result = await db.put(doc);
+			console.log('Report saved offline:', doc);
+			return result;
+		} catch (error) {
+			console.error('Error adding report:', error);
+			throw error;
+		}
+	},
 	async getAllTasks() {
 		try {
 			const db = await getDb();
