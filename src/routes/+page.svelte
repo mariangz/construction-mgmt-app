@@ -1,23 +1,69 @@
 <script>
 	import { taskDatabase } from '$lib/db';
+	import { onMount } from 'svelte';
 
 	let syncState = '';
 	let syncMessage = '';
+	let couchdbSettings = null;
+	let isConfigured = false;
+
+	onMount(() => {
+		loadSettings();
+	});
+
+	function loadSettings() {
+		const stored = localStorage.getItem('couchdb-settings');
+		if (stored) {
+			try {
+				couchdbSettings = JSON.parse(stored);
+				isConfigured = !!(couchdbSettings.username && couchdbSettings.password);
+			} catch (e) {
+				console.error('Error loading settings:', e);
+				isConfigured = false;
+			}
+		}
+	}
+
+	function saveSettings() {
+		if (couchdbSettings) {
+			localStorage.setItem('couchdb-settings', JSON.stringify(couchdbSettings));
+			syncMessage = '✅ Settings saved!';
+			syncState = 'success';
+			setTimeout(() => {
+				syncState = '';
+				syncMessage = '';
+			}, 2000);
+		}
+	}
 
 	async function syncWithCouchDB() {
-		const remoteUrl = 'http://admin:admin@localhost:5984/construction-app';
+		if (!isConfigured) {
+			syncMessage = 'Please configure CouchDB settings first';
+			syncState = 'error';
+			setTimeout(() => {
+				syncState = '';
+				syncMessage = '';
+			}, 3000);
+			return;
+		}
 
 		try {
 			syncState = 'syncing';
-			syncMessage = 'Syncing with couchdb...';
-			await taskDatabase.liveSync(remoteUrl);
-			console.log('success');
+			syncMessage = 'Syncing with CouchDB...';
+
+			const dbUrl = `${couchdbSettings.serverUrl}/construction-app`;
+			await taskDatabase.liveSync(dbUrl, {
+				username: couchdbSettings.username,
+				password: couchdbSettings.password
+			});
+
+			console.log('Sync completed');
 			syncState = 'success';
 			syncMessage = 'Sync completed successfully!';
 		} catch (error) {
-			console.error('Error syncing with couchdb:', error);
+			console.error('Error syncing with CouchDB:', error);
 			syncState = 'error';
-			syncMessage = 'Sync failed. Check your connection.';
+			syncMessage = 'Sync failed. Check your connection and settings.';
 		} finally {
 			setTimeout(() => {
 				syncState = '';
@@ -37,6 +83,18 @@
 			<p class="app-subtitle">Capture tasks and reports from the field — even offline.</p>
 		</div>
 	</header>
+
+	<!-- settings status and settings button -->
+	<div class="settings-status">
+		{#if isConfigured}
+			<p>✅ CouchDB configured: <strong>{couchdbSettings.username}</strong></p>
+		{:else}
+			<p>⚙️ <a href="/settings">Configure CouchDB settings</a> to enable sync</p>
+		{/if}
+		<div class="settings-buttons">
+			<a href="/settings" role="button" class="outline">Settings</a>
+		</div>
+	</div>
 
 	<nav class="main-nav">
 		<a href="/tasks" class="nav-button">
@@ -60,31 +118,34 @@
 		</a>
 	</nav>
 
-	<div class="sync-section">
-		<button
-			class="sync-button {syncState}"
-			onclick={syncWithCouchDB}
-			disabled={syncState === 'syncing'}
-		>
-			{#if syncState === 'syncing'}
-				<span>⟳</span>
-				Syncing...
-			{:else if syncState === 'success'}
-				<span class="sync-icon">✅</span>
-				Synced!
-			{:else if syncState === 'error'}
-				<span class="sync-icon">❌</span>
-				Retry Sync
-			{:else}
-				<span class="sync-icon">🔄</span>
-				Sync Now
-			{/if}
-		</button>
+	<!-- sync section -->
+	{#if isConfigured}
+		<div class="sync-section">
+			<button
+				class="sync-button {syncState}"
+				onclick={syncWithCouchDB}
+				disabled={syncState === 'syncing'}
+			>
+				{#if syncState === 'syncing'}
+					<span>⟳</span>
+					Syncing...
+				{:else if syncState === 'success'}
+					<span class="sync-icon">✅</span>
+					Synced!
+				{:else if syncState === 'error'}
+					<span class="sync-icon">❌</span>
+					Retry Sync
+				{:else}
+					<span class="sync-icon">🔄</span>
+					Sync Now
+				{/if}
+			</button>
 
-		{#if syncMessage}
-			<p class="sync-message {syncState}">{syncMessage}</p>
-		{/if}
-	</div>
+			{#if syncMessage}
+				<p class="sync-message {syncState}">{syncMessage}</p>
+			{/if}
+		</div>
+	{/if}
 </main>
 
 <style>
@@ -120,6 +181,18 @@
 		color: #666;
 		margin: 1rem 0 0 0;
 		line-height: 1.5;
+	}
+
+	.settings-status {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 2rem;
+	}
+
+	.settings-buttons {
+		display: flex;
+		gap: 0.5rem;
 	}
 
 	.main-nav {
@@ -210,9 +283,11 @@
 		background: #dc3545;
 		color: white;
 	}
+	
 	.sync-icon {
 		font-size: 1.2rem;
 	}
+	
 	.sync-message {
 		margin: 1rem 0 0 0;
 		padding: 0.75rem 1rem;
@@ -237,6 +312,7 @@
 		color: #721c24;
 		border: 1px solid #f5c6cb;
 	}
+	
 	@media (max-width: 600px) {
 		.container {
 			padding: 1rem;
@@ -244,6 +320,16 @@
 
 		.app-title {
 			font-size: 2.5rem;
+		}
+
+		.settings-status {
+			flex-direction: column;
+			gap: 1rem;
+			text-align: center;
+		}
+
+		.settings-buttons {
+			flex-direction: column;
 		}
 
 		.sync-section {
