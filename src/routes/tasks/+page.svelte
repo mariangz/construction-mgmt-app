@@ -7,6 +7,10 @@
 	let loading = true;
 	let error = null;
 
+	onMount(() => {
+		loadTasks();
+	});
+
 	async function loadTasks() {
 		// only run on the browser
 		if (!browser) return;
@@ -22,10 +26,6 @@
 			loading = false;
 		}
 	}
-
-	onMount(() => {
-		loadTasks();
-	});
 
 	function formatDate(dateString) {
 		return new Date(dateString).toLocaleDateString();
