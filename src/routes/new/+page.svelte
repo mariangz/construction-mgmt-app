@@ -9,6 +9,9 @@
 	let isSubmitting = false;
 	let errorMessage = '';
 
+	// set default date to today
+	date = new Date().toISOString().split('T')[0];
+
 	async function handleSubmit(event) {
 		event.preventDefault();
 
@@ -32,9 +35,6 @@
 			isSubmitting = false;
 		}
 	}
-
-	// set default date to today
-	date = new Date().toISOString().split('T')[0];
 </script>
 
 <main class="container">
