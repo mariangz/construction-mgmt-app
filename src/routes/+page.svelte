@@ -24,18 +24,6 @@
 		}
 	}
 
-	function saveSettings() {
-		if (couchdbSettings) {
-			localStorage.setItem('couchdb-settings', JSON.stringify(couchdbSettings));
-			syncMessage = '✅ Settings saved!';
-			syncState = 'success';
-			setTimeout(() => {
-				syncState = '';
-				syncMessage = '';
-			}, 2000);
-		}
-	}
-
 	async function syncWithCouchDB() {
 		if (!isConfigured) {
 			syncMessage = 'Please configure CouchDB settings first';
@@ -51,11 +39,14 @@
 			syncState = 'syncing';
 			syncMessage = 'Syncing with CouchDB...';
 
-			const dbUrl = `${couchdbSettings.serverUrl}/construction-app`;
-			await taskDatabase.liveSync(dbUrl, {
-				username: couchdbSettings.username,
-				password: couchdbSettings.password
-			});
+			const { username, password, serverUrl } = couchdbSettings;
+			const url = new URL(`${serverUrl}/construction-app`);
+
+			url.username = username.trim();
+			url.password = password.trim();
+
+			const dbUrl = url.href;
+			await taskDatabase.liveSync(dbUrl);
 
 			console.log('Sync completed');
 			syncState = 'success';
