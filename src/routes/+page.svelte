@@ -1,5 +1,6 @@
 <script>
-	import { taskDatabase } from '$lib/db';
+	// import the database functions
+	import { appDatabase } from '$lib/db';
 	import { onMount } from 'svelte';
 
 	let syncState = '';
@@ -7,15 +8,19 @@
 	let couchdbSettings = null;
 	let isConfigured = false;
 
+	// load settings when the app starts
 	onMount(() => {
 		loadSettings();
 	});
 
+	// load CouchDB settings from browser's localStorage (if they exist)
 	function loadSettings() {
 		const stored = localStorage.getItem('couchdb-settings');
 		if (stored) {
 			try {
+				// parse the JSON settings from localStorage
 				couchdbSettings = JSON.parse(stored);
+				// check if we have the required fields
 				isConfigured = !!(couchdbSettings.username && couchdbSettings.password);
 			} catch (e) {
 				console.error('Error loading settings:', e);
@@ -25,6 +30,7 @@
 	}
 
 	async function syncWithCouchDB() {
+		// prevent sync if CouchDB isn't configured but also the button is not shown
 		if (!isConfigured) {
 			syncMessage = 'Please configure CouchDB settings first';
 			syncState = 'error';
@@ -36,26 +42,29 @@
 		}
 
 		try {
+			// update UI to show sync is starting
 			syncState = 'syncing';
 			syncMessage = 'Syncing with CouchDB...';
-
+			// build the full database URL
 			const { username, password, serverUrl } = couchdbSettings;
 			const url = new URL(`${serverUrl}/construction-app`);
-
+			// add credentials to the URL
 			url.username = username.trim();
 			url.password = password.trim();
-
+			// get the full URL with credentials
 			const dbUrl = url.href;
 			await taskDatabase.liveSync(dbUrl);
 
 			console.log('Sync completed');
 			syncState = 'success';
 			syncMessage = 'Sync completed successfully!';
+
 		} catch (error) {
 			console.error('Error syncing with CouchDB:', error);
 			syncState = 'error';
 			syncMessage = 'Sync failed. Check your connection and settings.';
 		} finally {
+			// always hide the message after 3 seconds
 			setTimeout(() => {
 				syncState = '';
 				syncMessage = '';
@@ -65,6 +74,7 @@
 </script>
 
 <main class="container">
+	<!-- app header with title and description -->
 	<header class="app-header">
 		<div class="title-section">
 			<h1 class="app-title">
@@ -75,18 +85,22 @@
 		</div>
 	</header>
 
-	<!-- settings status and settings button -->
+	<!-- show different content based on whether CouchDB is configured or not -->
 	<div class="settings-status">
 		{#if isConfigured}
+			<!-- couchDB is configured - show current user -->
 			<p>✅ CouchDB configured: <strong>{couchdbSettings.username}</strong></p>
 		{:else}
+			<!-- couchDB not configured -->
 			<p>⚙️ <a href="/settings">Configure CouchDB settings</a> to enable sync</p>
 		{/if}
+		<!-- action button for settings management -->
 		<div class="settings-buttons">
 			<a href="/settings" role="button" class="outline">Settings</a>
 		</div>
 	</div>
 
+	<!-- links to main sections -->
 	<nav class="main-nav">
 		<a href="/tasks" class="nav-button">
 			<span class="icon">📋</span>
@@ -109,9 +123,10 @@
 		</a>
 	</nav>
 
-	<!-- sync section -->
+	<!-- sync section (only shown if configured) -->
 	{#if isConfigured}
 		<div class="sync-section">
+			<!-- sync button - changes based on current sync state -->
 			<button
 				class="sync-button {syncState}"
 				onclick={syncWithCouchDB}
@@ -127,11 +142,13 @@
 					<span class="sync-icon">❌</span>
 					Retry Sync
 				{:else}
+					<!-- default state -->
 					<span class="sync-icon">🔄</span>
 					Sync Now
 				{/if}
 			</button>
 
+			<!-- show sync status message if there is one -->
 			{#if syncMessage}
 				<p class="sync-message {syncState}">{syncMessage}</p>
 			{/if}
@@ -274,11 +291,11 @@
 		background: #dc3545;
 		color: white;
 	}
-	
+
 	.sync-icon {
 		font-size: 1.2rem;
 	}
-	
+
 	.sync-message {
 		margin: 1rem 0 0 0;
 		padding: 0.75rem 1rem;
@@ -303,7 +320,7 @@
 		color: #721c24;
 		border: 1px solid #f5c6cb;
 	}
-	
+
 	@media (max-width: 600px) {
 		.container {
 			padding: 1rem;
