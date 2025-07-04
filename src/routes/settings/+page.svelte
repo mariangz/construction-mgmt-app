@@ -42,6 +42,21 @@
 				serverUrl: serverUrl.trim()
 			};
 
+			// check if the username and password are valid
+			const response = await fetch(`${serverUrl}/_session`, {
+			method: 'GET',
+			headers: {
+				'Authorization': 'Basic ' + btoa(username + ':' + password)
+			}
+		});
+
+		// if the response is not ok, show an error message
+		if (!response.ok) {
+			showMessage('❌ Invalid username or password', 'error');
+			return;
+		}
+
+			// if the response is ok, save the settings
 			localStorage.setItem('couchdb-settings', JSON.stringify(settings));
 			showMessage('✅ Settings saved successfully!', 'success');
 
