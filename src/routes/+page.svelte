@@ -112,7 +112,7 @@
 			View Reports
 		</a>
 
-		<a href="/new" class="nav-button add-button">
+		<a href="/tasks/new" class="nav-button add-button">
 			<span class="icon">➕</span>
 			Add Task
 		</a>
