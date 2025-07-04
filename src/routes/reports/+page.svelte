@@ -24,7 +24,7 @@
 	async function deleteReport(id) {
 		if (confirm('Are you sure you want to delete this report?')) {
 			try {
-				await appDatabase.deleteTask(id);
+				await appDatabase.deleteDocument(id);
 				await loadReports();
 			} catch (error) {
 				console.error('Error deleting report:', error);

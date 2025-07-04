@@ -110,7 +110,7 @@ export const appDatabase = {
 	},
 
 	// get a single document by id
-	async getTask(id) {
+	async getDocument(id) {
 		try {
 			const db = await getDb();
 			const doc = await db.get(id);
@@ -122,7 +122,7 @@ export const appDatabase = {
 	},
 
 	// delete a document (task, report, etc) by id
-	async deleteTask(id) {
+	async deleteDocument(id) {
 		try {
 			const db = await getDb();
 

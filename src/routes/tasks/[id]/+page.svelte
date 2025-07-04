@@ -22,7 +22,7 @@
 		try {
 			loading = true;
 			error = null;
-			task = await appDatabase.getTask(id);
+			task = await appDatabase.getDocument(id);
 		} catch (err) {
 			error = 'Task not found or failed to load.';
 			console.error('Error loading task:', err);
@@ -31,14 +31,14 @@
 		}
 	}
 
-	async function deleteTask() {
+	async function deleteDocument() {
 		if (!confirm('Are you sure you want to delete this task?')) {
 			return;
 		}
 
 		try {
 			deleting = true;
-			await appDatabase.deleteTask(taskId);
+			await appDatabase.deleteDocument(taskId);
 			goto('/tasks');
 		} catch (err) {
 			alert('Failed to delete task. Please try again.');
@@ -110,7 +110,7 @@
 
 		<div class="actions">
 			<a href="/tasks" role="button" class="secondary">Back to Tasks</a>
-			<button onclick={deleteTask} class="contrast" disabled={deleting}>
+			<button onclick={deleteDocument} class="contrast" disabled={deleting}>
 				{deleting ? 'Deleting...' : 'Delete Task'}
 			</button>
 		</div>
