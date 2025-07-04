@@ -1,39 +1,48 @@
+// all local database operations using PouchDB
 let db = null;
 
 async function getDb() {
 	if (!db) {
-		// we’re in the browser?
+		// check if we're running in the browser
 		if (typeof window !== 'undefined') {
-			// only import PouchDB on the browser
+			// dynamic import, only load PouchDB in browser
 			const { default: PouchDB } = await import('pouchdb-browser');
-			db = new PouchDB('construction-tasks');
+			// create local database 'construction-app'
+			db = new PouchDB('construction-app');
 		} else {
-			throw new Error();
+			// database not available
+			throw new Error('Database not available during SSR');
 		}
 	}
 	return db;
 }
 
-export const taskDatabase = {
+// export object with all database operations
+// tasks
+export const appDatabase = {
 	async addTask(task) {
 		try {
 			// get the database instance
 			const db = await getDb();
 
+			// generate timestamp for record creation
 			const now = new Date().toISOString();
+
+			// create task document
 			const doc = {
 				_id: now + '-' + Math.random().toString(36).slice(2),
-				type: 'task',
+				type: 'task', // document type for filtering for the view
 				title: task.title,
 				date: task.date,
 				description: task.description,
-				status: 'open',
+				status: 'open', // default status for new tasks
 				assignedTo: task.assignedTo || null,
 				createdAt: now,
 				updatedAt: now,
-				createdBy: 'admin'
+				createdBy: 'admin' // default
 			};
 
+			// save to PouchDB
 			const result = await db.put(doc);
 			console.log('Task saved offline:', doc);
 			return result;
@@ -42,31 +51,37 @@ export const taskDatabase = {
 			throw error;
 		}
 	},
+
+	// reports
+	// sdd a new report to the database
 	async addReport(report) {
 		try {
 			// get the database instance
 			const db = await getDb();
 
+			// generate timestamp for record creation
 			const now = new Date().toISOString();
+
+			// create  report document
 			const doc = {
 				_id: now + '-' + Math.random().toString(36).slice(2),
-				type: 'report',
+				type: 'report', // document type
 				title: report.title,
 				description: report.description,
-				reportType: report.reportType,
+				reportType: report.reportType, // inspection, progress, safety, etc.
 				location: report.location,
 				assignedTo: report.assignedTo || null,
-				priority: report.priority || 'medium',
-				status: report.status || 'draft',
+				priority: report.priority || 'medium', // low, medium, high, urgent
+				status: report.status || 'draft', // draft, completed, submitted
 				dueDate: report.dueDate || null,
-				materials: report.materials || null,
-				findings: report.findings || null,
+				materials: report.materials || null, // optional
 				recommendations: report.recommendations || null,
 				createdAt: now,
 				updatedAt: now,
-				createdBy: 'admin'
+				createdBy: 'admin' // default
 			};
 
+			// save to PouchDB
 			const result = await db.put(doc);
 			console.log('Report saved offline:', doc);
 			return result;
@@ -75,11 +90,15 @@ export const taskDatabase = {
 			throw error;
 		}
 	},
+
+	// get all documents from the database (tasks, reports, etc)
 	async getAllTasks() {
 		try {
 			const db = await getDb();
+
+			// get all documents with their content
 			const result = await db.allDocs({
-				include_docs: true
+				include_docs: true //  full document with all fields
 			});
 			console.log(result);
 
@@ -89,6 +108,8 @@ export const taskDatabase = {
 			throw error;
 		}
 	},
+
+	// get a single document by id
 	async getTask(id) {
 		try {
 			const db = await getDb();
@@ -99,10 +120,16 @@ export const taskDatabase = {
 			throw error;
 		}
 	},
+
+	// delete a document (task, report, etc) by id
 	async deleteTask(id) {
 		try {
 			const db = await getDb();
+
+			// first get the document (needed for PouchDB deletion)
 			const doc = await db.get(id);
+
+			// .remove() deletes the document
 			const result = await db.remove(doc);
 			console.log('Task deleted:', id);
 			return result;
@@ -111,12 +138,14 @@ export const taskDatabase = {
 			throw error;
 		}
 	},
-	// sync with couchdb
+
+	// sync local PouchDB with remote CouchDB: 
+	// upload any local changes to remote, dwnload any remote changes to local
 	async liveSync(remoteUrl) {
 		const db = await getDb();
 		db.sync(remoteUrl, {
-			live: true,
-			retry: true
+			live: true, // continuous sync
+			retry: true // automatically retry if connection fails
 		});
 	}
 };
