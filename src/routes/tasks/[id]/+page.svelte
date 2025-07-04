@@ -2,22 +2,27 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { taskDatabase } from '$lib/db';
+	import { appDatabase } from '$lib/db';
 
 	let task = null;
 	let loading = true;
 	let error = null;
 	let deleting = false;
 
-	const taskId = $page.params.id;
-	console.log('page', $page);
+	$: taskId = $page.params.id;
+	$: if (taskId) {
 	console.log('taskId', taskId);
+	loadTask(taskId);
+}
 
-	async function loadTask() {
+	console.log('page', $page);
+	console.log('taskId', taskId)
+
+	async function loadTask(id) {
 		try {
 			loading = true;
 			error = null;
-			task = await taskDatabase.getTask(taskId);
+			task = await appDatabase.getTask(id);
 		} catch (err) {
 			error = 'Task not found or failed to load.';
 			console.error('Error loading task:', err);
@@ -33,7 +38,7 @@
 
 		try {
 			deleting = true;
-			await taskDatabase.deleteTask(taskId);
+			await appDatabase.deleteTask(taskId);
 			goto('/tasks');
 		} catch (err) {
 			alert('Failed to delete task. Please try again.');
@@ -43,9 +48,6 @@
 		}
 	}
 
-	onMount(() => {
-		loadTask();
-	});
 
 	function formatDate(dateString) {
 		return new Date(dateString).toLocaleDateString();

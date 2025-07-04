@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { taskDatabase } from '$lib/db';
+	import { appDatabase } from '$lib/db';
 	import { browser } from '$app/environment';
 
 	let tasks = [];
@@ -18,7 +18,7 @@
 		try {
 			loading = true;
 			error = null;
-			tasks = await taskDatabase.getAllTasks();
+			tasks = await appDatabase.getAllTasks();
 		} catch (err) {
 			error = 'Failed to load tasks. Please try again.';
 			console.error('Error loading tasks:', err);

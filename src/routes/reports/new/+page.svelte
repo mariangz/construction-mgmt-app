@@ -1,5 +1,5 @@
 <script>
-	import { taskDatabase } from '$lib/db';
+	import { appDatabase } from '$lib/db';
 	import { goto } from '$app/navigation';
 
 	let title = '';
@@ -82,7 +82,7 @@
 				recommendations: recommendations.trim() || null
 			};
 
-			await taskDatabase.addReport(reportData);
+			await appDatabase.addReport(reportData);
 			goto('/reports');
 		} catch (error) {
 			console.error('Error creating report:', error);

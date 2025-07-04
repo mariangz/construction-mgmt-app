@@ -1,5 +1,5 @@
 <script>
-	import { taskDatabase } from '$lib/db';
+	import { appDatabase } from '$lib/db';
 	import { goto } from '$app/navigation';
 
 	let taskTitle = '';
@@ -19,7 +19,7 @@
 		errorMessage = '';
 
 		try {
-			await taskDatabase.addTask({
+			await appDatabase.addTask({
 				title: taskTitle.trim(),
 				date: date,
 				description: description.trim(),

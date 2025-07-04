@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { taskDatabase } from '$lib/db';
+	import { appDatabase } from '$lib/db';
 
 	let reports = [];
 	let isLoading = true;
@@ -13,7 +13,7 @@
 
 	async function loadReports() {
 		try {
-			const allDocs = await taskDatabase.getAllTasks();
+			const allDocs = await appDatabase.getAllTasks();
 			reports = allDocs.filter(doc => doc.type === 'report');
 			filteredReports = reports;
 		} catch (error) {
@@ -24,7 +24,7 @@
 	async function deleteReport(id) {
 		if (confirm('Are you sure you want to delete this report?')) {
 			try {
-				await taskDatabase.deleteTask(id);
+				await appDatabase.deleteTask(id);
 				await loadReports();
 			} catch (error) {
 				console.error('Error deleting report:', error);
