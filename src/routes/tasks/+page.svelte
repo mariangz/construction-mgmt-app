@@ -53,7 +53,7 @@
 	{:else if tasks.length === 0}
 		<article>
 			<p>No tasks found. Start by adding a new task!</p>
-			<a href="/new" role="button">Add Your First Task</a>
+			<a href="/tasks/new" role="button">Add Your First Task</a>
 		</article>
 	{:else}
 		<div class="grid">
