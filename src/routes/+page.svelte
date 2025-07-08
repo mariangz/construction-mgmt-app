@@ -53,7 +53,7 @@
 			url.password = password.trim();
 			// get the full URL with credentials
 			const dbUrl = url.href;
-			await taskDatabase.liveSync(dbUrl);
+			await appDatabase.liveSync(dbUrl);
 
 			console.log('Sync completed');
 			syncState = 'success';
