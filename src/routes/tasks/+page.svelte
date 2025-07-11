@@ -18,7 +18,8 @@
 		try {
 			loading = true;
 			error = null;
-			tasks = await appDatabase.getAllTasks();
+			const allDocs = await appDatabase.getAllTasks();
+			tasks = allDocs.filter(doc => doc.type === 'task');
 		} catch (err) {
 			error = 'Failed to load tasks. Please try again.';
 			console.error('Error loading tasks:', err);
