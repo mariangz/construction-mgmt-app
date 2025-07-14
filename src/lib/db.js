@@ -17,6 +17,14 @@ async function getDb() {
 	return db;
 }
 
+	// mark a document as synced
+	async function markAsSynced(doc) {
+		const db = await getDb();
+		doc.synced = true;
+		doc.updatedAt = new Date().toISOString();
+		await db.put(doc);
+	}
+
 // export object with all database operations
 // tasks
 export const appDatabase = {
@@ -37,6 +45,7 @@ export const appDatabase = {
 				description: task.description,
 				status: 'open', // default status for new tasks
 				assignedTo: task.assignedTo || null,
+				synced: false,
 				createdAt: now,
 				updatedAt: now,
 				createdBy: 'admin' // default
@@ -45,6 +54,7 @@ export const appDatabase = {
 			// save to PouchDB
 			const result = await db.put(doc);
 			console.log('Task saved offline:', doc);
+			console.log('result', result);
 			return result;
 		} catch (error) {
 			console.error('Error adding task:', error);
@@ -76,6 +86,7 @@ export const appDatabase = {
 				dueDate: report.dueDate || null,
 				materials: report.materials || null, // optional
 				recommendations: report.recommendations || null,
+				synced: false,
 				createdAt: now,
 				updatedAt: now,
 				createdBy: 'admin' // default
@@ -146,6 +157,16 @@ export const appDatabase = {
 		db.sync(remoteUrl, {
 			live: true, // continuous sync
 			retry: true // automatically retry if connection fails
+		}).on('change', async (info) => {
+			console.log('Sync change:', info);
+			// mark documents as synced when they are synced
+			if (info.change?.docs) {
+				for (const change of info.change.docs) {
+					if ((change.type === 'task' || change.type === 'report') && !change.synced) {
+						await markAsSynced(change);
+					}
+				}
+			}
 		});
 	}
 };
