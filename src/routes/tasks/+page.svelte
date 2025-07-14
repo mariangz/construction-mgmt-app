@@ -117,6 +117,21 @@
 		margin-bottom: 1rem;
 	}
 
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		gap: 1.5rem;
+		margin-bottom: 2rem;
+	}
+
+	.grid article {
+		background: white;
+		border: 2px solid #e9ecef;
+		border-radius: 12px;
+		padding: 1.5rem;
+
+	}
+
 	.task-description {
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
@@ -158,6 +173,11 @@
 			flex-direction: column;
 			gap: 1rem;
 			text-align: center;
+		}
+
+		.grid {
+			grid-template-columns: 1fr;
+			gap: 1rem;
 		}
 
 		footer {
