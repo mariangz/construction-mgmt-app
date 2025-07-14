@@ -64,7 +64,7 @@
 				<div class="report-card">
 					<div class="report-header">
 						<h3 class="report-title">{report.title}</h3>
-						<span class="status-badge {report.status}">{report.status}</span>
+						<span class="status-badge {report.status}">{report.status} {report.synced ? '✅' : '⏳'}</span>
 					</div>
 					<p class="report-description">{report.description}</p>
 					<div class="report-meta">

@@ -70,7 +70,7 @@
 					<footer>
 						<div class="task-meta">
 							<small>Due: {formatDate(task.date)}</small>
-							<small>Status: <mark>{task.status || 'open'}</mark></small>
+							<small>Status: <mark>{task.status || 'open'}</mark> {task.synced ? '✅' : '⏳'}</small>
 						</div>
 						<a href="/tasks/{task._id}" role="button" class="outline">View Details</a>
 					</footer>
@@ -116,7 +116,7 @@
 		font-size: 1.1rem;
 		margin-bottom: 1rem;
 	}
-	
+
 	.task-description {
 		display: -webkit-box;
 		-webkit-line-clamp: 2;

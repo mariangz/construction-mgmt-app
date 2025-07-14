@@ -84,7 +84,7 @@
 					{#if task.assignedTo}
 						<p><small>Assigned to: {task.assignedTo}</small></p>
 					{/if}
-					<p><small>Status: <mark>{task.status || 'open'}</mark></small></p>
+					<p><small>Status: <mark>{task.status || 'open'}</mark> {task.synced ? '✅' : '⏳'}</small></p>
 				</div>
 			</header>
 

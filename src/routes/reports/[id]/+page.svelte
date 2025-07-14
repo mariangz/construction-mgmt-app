@@ -117,6 +117,9 @@ async function loadReport(id) {
 						<span class="priority-badge" style="background-color: {priorityColors[report.priority] || '#6c757d'}">
 							{report.priority} priority
 						</span>
+						<span class="sync-status">
+							{report.synced ? '✅ Synced' : '⏳ Pending'}
+						</span>
 					</div>
 				</div>
 			</header>
@@ -232,6 +235,17 @@ async function loadReport(id) {
 		font-weight: 500;
 		text-transform: uppercase;
 		color: white;
+		white-space: nowrap;
+	}
+
+	.sync-status {
+		padding: 0.25rem 0.75rem;
+		border-radius: 20px;
+		font-size: 0.8rem;
+		font-weight: 500;
+		background-color: #f8f9fa;
+		color: #495057;
+		border: 1px solid #dee2e6;
 		white-space: nowrap;
 	}
 
