@@ -38,10 +38,18 @@
 </script>
 
 <main class="container">
-	<header class="page-header">
+	<nav aria-label="breadcrumb">
+		<ul>
+			<li><a href="/">Home</a></li>
+			<li>Reports</li>
+		</ul>
+	</nav>
+	<div class="headings">
 		<h1>📊 Reports</h1>
-		<a href="/reports/new" class="add-button">➕ Add Report</a>
-	</header>
+		{#if filteredReports.length > 0}
+			<a href="/reports/new" class="add-button">➕ Add Report</a>
+		{/if}
+	</div>
 
 	{#if isLoading}
 		<div class="loading">Loading reports...</div>
@@ -82,24 +90,13 @@
 </main>
 
 <style>
-	.container {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 2rem 1rem;
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-	}
 
-	.page-header {
+
+	.headings {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		margin-bottom: 2rem;
-	}
-
-	.page-header h1 {
-		font-size: 2rem;
-		margin: 0;
-		color: #1a1a1a;
 	}
 
 	.add-button {
@@ -257,8 +254,8 @@
 		text-decoration: underline;
 	}
 
-	@media (max-width: 768px) {
-		.page-header {
+	@media (max-width: 576px) {
+		.headings {
 			flex-direction: column;
 			gap: 1rem;
 			text-align: center;
@@ -273,4 +270,4 @@
 			justify-content: space-between;
 		}
 	}
-</style> 
+</style>

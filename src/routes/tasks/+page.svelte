@@ -42,6 +42,9 @@
 	</nav>
 	<div class="headings">
 		<h1>Construction Tasks</h1>
+		{#if tasks.length > 0}
+			<a href="/tasks/new" class="add-button">➕ Add Task</a>
+		{/if}
 	</div>
 
 	{#if loading}
@@ -52,10 +55,10 @@
 			<button onclick={loadTasks}>Try Again</button>
 		</article>
 	{:else if tasks.length === 0}
-		<article>
-			<p>No tasks found. Start by adding a new task!</p>
-			<a href="/tasks/new" role="button">Add Your First Task</a>
-		</article>
+		<div class="empty-state">
+			<p>No tasks found.</p>
+			<a href="/tasks/new" role="button" class="add-button">Add Your First Task</a>
+		</div>
 	{:else}
 		<div class="grid">
 			{#each tasks as task}
@@ -75,6 +78,10 @@
 			{/each}
 		</div>
 	{/if}
+
+	<nav class="bottom-nav">
+		<a href="/" class="nav-link">← Back to Home</a>
+	</nav>
 </main>
 
 <style>
@@ -85,6 +92,31 @@
 		margin-bottom: 2rem;
 	}
 
+	.add-button {
+		background: #007bff;
+		color: white;
+		padding: 0.75rem 1.5rem;
+		border-radius: 8px;
+		text-decoration: none;
+		font-weight: 500;
+		transition: background 0.2s ease;
+	}
+
+	.add-button:hover {
+		background: #0056b3;
+	}
+
+	.empty-state {
+		text-align: center;
+		padding: 3rem 1rem;
+		color: #666;
+	}
+
+	.empty-state p {
+		font-size: 1.1rem;
+		margin-bottom: 1rem;
+	}
+	
 	.task-description {
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
@@ -103,6 +135,22 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
+	}
+
+	.bottom-nav {
+		margin-top: 2rem;
+		padding-top: 2rem;
+		border-top: 1px solid #dee2e6;
+	}
+
+	.nav-link {
+		color: #007bff;
+		text-decoration: none;
+		font-weight: 500;
+	}
+
+	.nav-link:hover {
+		text-decoration: underline;
 	}
 
 	@media (max-width: 576px) {
