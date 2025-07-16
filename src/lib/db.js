@@ -150,14 +150,11 @@ export const appDatabase = {
 		}
 	},
 
-	// sync local PouchDB with remote CouchDB: 
-	// upload any local changes to remote, dwnload any remote changes to local
-	async liveSync(remoteUrl) {
+	// sync local PouchDB with remote CouchDB:
+	// upload any local changes to remote, download any remote changes to local
+	async syncOnce(remoteUrl) {
 		const db = await getDb();
-		db.sync(remoteUrl, {
-			live: true, // continuous sync
-			retry: true // automatically retry if connection fails
-		}).on('change', async (info) => {
+		return db.sync(remoteUrl).on('change', async (info) => {
 			console.log('Sync change:', info);
 			// mark documents as synced when they are synced
 			if (info.change?.docs) {
@@ -167,6 +164,10 @@ export const appDatabase = {
 					}
 				}
 			}
+		}).on('complete', (info) => {
+			console.log('Sync completed:', info);
+		}).on('error', (err) => {
+			console.error('Sync error:', err);
 		});
 	}
 };
