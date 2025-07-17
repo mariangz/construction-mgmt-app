@@ -133,6 +133,24 @@ export const appDatabase = {
 		}
 	},
 
+	// update a document by id
+	async updateDocument(doc) {
+		try {
+			const db = await getDb();
+
+			// update timestamp
+			doc.updatedAt = new Date().toISOString();
+
+			// save changes
+			const result = await db.put(doc);
+			console.log('Document updated:', result);
+			return result;
+		} catch (error) {
+			console.error('Error updating document:', error);
+			throw error;
+		}
+	},
+
 	// delete a document (task, report, etc) by id
 	async deleteDocument(id) {
 		try {
