@@ -1,4 +1,5 @@
 // all local database operations using PouchDB
+import { v4 as uuidv4 } from 'uuid';
 let db = null;
 
 async function getDb() {
@@ -38,7 +39,7 @@ export const appDatabase = {
 
 			// create task document
 			const doc = {
-				_id: now + '-' + Math.random().toString(36).slice(2),
+				_id: uuidv4(),
 				type: 'task', // document type for filtering for the view
 				title: task.title,
 				date: task.date,
@@ -74,7 +75,7 @@ export const appDatabase = {
 
 			// create  report document
 			const doc = {
-				_id: now + '-' + Math.random().toString(36).slice(2),
+				_id: uuidv4(),
 				type: 'report', // document type
 				title: report.title,
 				description: report.description,
