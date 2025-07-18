@@ -10,7 +10,6 @@
 	let deleting = false;
 	let editing = false;
 	let saving = false;
-	let errorMessage = '';
 
 	// edit form variables
 	let editTitle = '';
@@ -72,7 +71,6 @@
 
 	function cancelEdit() {
 		editing = false;
-		errorMessage = '';
 		// reset form to original values
 		if (task) {
 			editTitle = task.title || '';
@@ -87,7 +85,6 @@
 		event.preventDefault();
 
 		saving = true;
-		errorMessage = '';
 
 				try {
 			// update the task object with new values
@@ -107,7 +104,7 @@
 
 			console.log('Task updated successfully');
 		} catch (err) {
-			errorMessage = 'Failed to update task. Please try again.';
+			alert('Failed to update task. Please try again.');
 			console.error('Error updating task:', err);
 		} finally {
 			saving = false;
@@ -138,18 +135,12 @@
 		<article>
 			<h2>Error</h2>
 			<p>{error}</p>
-			<a href="/tasks" role="button">Back to Tasks</a>
+			<a href="/tasks" role="button">← Back to Tasks</a>
 		</article>
 	{:else if task}
 		{#if editing}
 			<!-- edit mode -->
 			<h1>Edit Task</h1>
-
-			{#if errorMessage}
-				<article class="error">
-					{errorMessage}
-				</article>
-			{/if}
 
 			<form onsubmit={saveEdit}>
 				<fieldset>
@@ -263,7 +254,7 @@
 			</article>
 
 			<div class="actions">
-				<a href="/tasks" role="button" class="secondary">Back to Tasks</a>
+				<a href="/tasks" role="button" class="secondary">← Back to Tasks</a>
 				<button onclick={startEdit} class="outline">Edit Task</button>
 				<button onclick={deleteDocument} class="contrast" disabled={deleting}>
 					{deleting ? 'Deleting...' : 'Delete Task'}
@@ -279,13 +270,6 @@
 		gap: 1rem;
 		justify-content: flex-end;
 		margin-top: 1rem;
-	}
-
-	.error {
-		background: #f8d7da;
-		color: #721c24;
-		border: 1px solid #f5c6cb;
-		margin-bottom: 1rem;
 	}
 
 	@media (max-width: 576px) {
