@@ -14,7 +14,7 @@
 	let findings = '';
 	let recommendations = '';
 	let isSubmitting = false;
-	let errors = {};
+	let errorMessage = '';
 
 	const reportTypes = [
 		{ value: 'inspection', label: 'Inspection Report' },
@@ -39,33 +39,11 @@
 		{ value: 'submitted', label: 'Submitted' }
 	];
 
-	function validateForm() {
-		errors = {};
-
-		if (!title.trim()) {
-			errors.title = 'Title is required';
-		}
-
-		if (!description.trim()) {
-			errors.description = 'Description is required';
-		}
-
-		if (!location.trim()) {
-			errors.location = 'Location is required';
-		}
-
-		if (dueDate && new Date(dueDate) < new Date()) {
-			errors.dueDate = 'Due date cannot be in the past';
-		}
-
-		return Object.keys(errors).length === 0;
-	}
-
-	async function handleSubmit() {
-  event.preventDefault();
-		if (!validateForm()) return;
+	async function handleSubmit(event) {
+		event.preventDefault();
 
 		isSubmitting = true;
+		errorMessage = '';
 
 		try {
 			const reportData = {
@@ -86,7 +64,7 @@
 			goto('/reports');
 		} catch (error) {
 			console.error('Error creating report:', error);
-			alert('Failed to create report. Please try again.');
+			errorMessage = 'Failed to create report. Please try again.';
 		} finally {
 			isSubmitting = false;
 		}
@@ -104,6 +82,12 @@
 		<h1>📝 Add New Report</h1>
 	</header>
 
+	{#if errorMessage}
+		<article class="error">
+			{errorMessage}
+		</article>
+	{/if}
+
 	<form onsubmit={handleSubmit} class="report-form">
 		<div class="form-section">
 			<h2>Basic Information</h2>
@@ -114,17 +98,15 @@
 					id="title"
 					type="text"
 					bind:value={title}
-					class={{ error: errors.title }}
 					placeholder="Enter report title..."
+					required
+					disabled={isSubmitting}
 				/>
-				{#if errors.title}
-					<span class="error-text">{errors.title}</span>
-				{/if}
 			</div>
 
 			<div class="form-group">
 				<label for="reportType">Report Type</label>
-				<select id="reportType" bind:value={reportType}>
+				<select id="reportType" bind:value={reportType} disabled={isSubmitting}>
 					{#each reportTypes as type}
 						<option value={type.value}>{type.label}</option>
 					{/each}
@@ -137,12 +119,10 @@
 					id="location"
 					type="text"
 					bind:value={location}
-					class={{ error: errors.location }}
 					placeholder="e.g., Building A - Floor 3, etc."
+					required
+					disabled={isSubmitting}
 				/>
-				{#if errors.location}
-					<span class="error-text">{errors.location}</span>
-				{/if}
 			</div>
 
 			<div class="form-group">
@@ -150,13 +130,11 @@
 				<textarea
 					id="description"
 					bind:value={description}
-					class={{ error: errors.description }}
 					placeholder="Provide a detailed description of the report..."
 					rows="4"
+					required
+					disabled={isSubmitting}
 				></textarea>
-				{#if errors.description}
-					<span class="error-text">{errors.description}</span>
-				{/if}
 			</div>
 		</div>
 
@@ -171,12 +149,13 @@
 						type="text"
 						bind:value={assignedTo}
 						placeholder="Enter name or leave blank"
+						disabled={isSubmitting}
 					/>
 				</div>
 
 				<div class="form-group">
 					<label for="priority">Priority</label>
-					<select id="priority" bind:value={priority}>
+					<select id="priority" bind:value={priority} disabled={isSubmitting}>
 						{#each priorities as priorityOption}
 							<option value={priorityOption.value}>{priorityOption.label}</option>
 						{/each}
@@ -187,7 +166,7 @@
 			<div class="form-row">
 				<div class="form-group">
 					<label for="status">Status</label>
-					<select id="status" bind:value={status}>
+					<select id="status" bind:value={status} disabled={isSubmitting}>
 						{#each statuses as statusOption}
 							<option value={statusOption.value}>{statusOption.label}</option>
 						{/each}
@@ -196,10 +175,7 @@
 
 				<div class="form-group">
 					<label for="dueDate">Due Date</label>
-					<input id="dueDate" type="date" bind:value={dueDate} class={{ error: errors.dueDate }} />
-					{#if errors.dueDate}
-						<span class="error-text">{errors.dueDate}</span>
-					{/if}
+					<input id="dueDate" type="date" bind:value={dueDate} disabled={isSubmitting} />
 				</div>
 			</div>
 		</div>
@@ -214,6 +190,7 @@
 					bind:value={materials}
 					placeholder="List materials, equipment, or resources involved..."
 					rows="3"
+					disabled={isSubmitting}
 				></textarea>
 			</div>
 
@@ -224,6 +201,7 @@
 					bind:value={findings}
 					placeholder="Document key findings, observations, or issues..."
 					rows="4"
+					disabled={isSubmitting}
 				></textarea>
 			</div>
 
@@ -234,13 +212,16 @@
 					bind:value={recommendations}
 					placeholder="Provide recommendations or required actions..."
 					rows="3"
+					disabled={isSubmitting}
 				></textarea>
 			</div>
 		</div>
 
 		<div class="form-actions">
-			<button type="button" class="cancel-button" onclick={handleCancel}> Cancel </button>
-			<button type="submit" class="submit-button" disabled={isSubmitting}>
+			<button type="button" class="secondary" onclick={handleCancel} disabled={isSubmitting}>
+				Cancel
+			</button>
+			<button type="submit" disabled={isSubmitting}>
 				{isSubmitting ? 'Creating Report...' : 'Create Report'}
 			</button>
 		</div>
@@ -261,7 +242,6 @@
 
 	.page-header h1 {
 		font-size: 2rem;
-		color: #1a1a1a;
 	}
 
 	.report-form {
@@ -294,48 +274,6 @@
 		gap: 1rem;
 	}
 
-	label {
-		display: block;
-		font-weight: 500;
-		color: #495057;
-		margin-bottom: 0.5rem;
-	}
-
-	input,
-	select,
-	textarea {
-		width: 100%;
-		padding: 0.75rem;
-		border: 2px solid #e9ecef;
-		border-radius: 8px;
-		font-size: 1rem;
-		transition: border-color 0.2s ease;
-	}
-
-	input:focus,
-	select:focus,
-	textarea:focus {
-		outline: none;
-		border-color: #007bff;
-	}
-
-	input.error,
-	textarea.error {
-		border-color: #dc3545;
-	}
-
-	.error-text {
-		color: #dc3545;
-		font-size: 0.9rem;
-		margin-top: 0.25rem;
-		display: block;
-	}
-
-	textarea {
-		resize: vertical;
-		min-height: 100px;
-	}
-
 	.form-actions {
 		display: flex;
 		gap: 1rem;
@@ -345,30 +283,11 @@
 		border-top: 2px solid #e9ecef;
 	}
 
-	.cancel-button {
-		padding: 0.75rem 1.5rem;
-		background: #6c757d;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-size: 1rem;
-		cursor: pointer;
-		transition: background 0.2s ease;
-	}
-
-	.cancel-button:hover {
-		background: #545b62;
-	}
-
-	.submit-button {
-		padding: 0.75rem 1.5rem;
-		background: #007bff;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-size: 1rem;
-		cursor: pointer;
-		transition: background 0.2s ease;
+	.error {
+		background: #f8d7da;
+		color: #721c24;
+		border: 1px solid #f5c6cb;
+		margin-bottom: 1rem;
 	}
 
 	@media (max-width: 768px) {
