@@ -120,8 +120,9 @@
 
 <style>
 	.error {
-		background-color: var(--del-color);
-		border-color: var(--del-color);
+		background: #f8d7da;
+		color: #721c24;
+		border: 1px solid #f5c6cb;
 		margin-bottom: 1rem;
 	}
 
