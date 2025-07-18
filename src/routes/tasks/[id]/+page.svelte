@@ -102,6 +102,7 @@
 
 			await appDatabase.updateDocument(updatedTask);
 
+			task = updatedTask;
 			editing = false;
 
 			console.log('Task updated successfully');
