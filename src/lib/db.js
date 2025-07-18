@@ -1,5 +1,4 @@
 // all local database operations using PouchDB
-import { v4 as uuidv4 } from 'uuid';
 let db = null;
 
 async function getDb() {
@@ -37,9 +36,8 @@ export const appDatabase = {
 			// generate timestamp for record creation
 			const now = new Date().toISOString();
 
-			// create task document
+			// create task document (no _id, the db will generate it)
 			const doc = {
-				_id: uuidv4(),
 				type: 'task', // document type for filtering for the view
 				title: task.title,
 				date: task.date,
@@ -52,8 +50,8 @@ export const appDatabase = {
 				createdBy: 'admin' // default
 			};
 
-			// save to PouchDB
-			const result = await db.put(doc);
+			// save to PouchDB using post() to auto-generate ID
+			const result = await db.post(doc);
 			console.log('Task saved offline:', doc);
 			console.log('result', result);
 			return result;
@@ -64,7 +62,7 @@ export const appDatabase = {
 	},
 
 	// reports
-	// sdd a new report to the database
+	// add a new report to the database
 	async addReport(report) {
 		try {
 			// get the database instance
@@ -73,9 +71,8 @@ export const appDatabase = {
 			// generate timestamp for record creation
 			const now = new Date().toISOString();
 
-			// create  report document
+			// create report document (no _id, the db will generate it)
 			const doc = {
-				_id: uuidv4(),
 				type: 'report', // document type
 				title: report.title,
 				description: report.description,
@@ -93,8 +90,8 @@ export const appDatabase = {
 				createdBy: 'admin' // default
 			};
 
-			// save to PouchDB
-			const result = await db.put(doc);
+			// save to PouchDB using post() to auto-generate ID
+			const result = await db.post(doc);
 			console.log('Report saved offline:', doc);
 			return result;
 		} catch (error) {
