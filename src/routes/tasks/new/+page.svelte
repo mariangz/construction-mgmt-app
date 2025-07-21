@@ -46,7 +46,7 @@
 		</ul>
 	</nav>
 
-	<h1>Add New Task</h1>
+	<h1>📝 Add New Task</h1>
 
 	{#if errorMessage}
 		<article class="error">
@@ -54,7 +54,7 @@
 		</article>
 	{/if}
 
-	<form onsubmit={handleSubmit}>
+	<form onsubmit={handleSubmit} class="task-form">
 		<fieldset>
 			<label for="taskTitle">
 				Task Title *
@@ -119,6 +119,18 @@
 </main>
 
 <style>
+	.container {
+		max-width: 800px;
+		margin: 0 auto;
+	}
+
+	.task-form {
+		background: white;
+		border: 2px solid #e9ecef;
+		border-radius: 12px;
+		padding: 2rem;
+	}
+
 	.error {
 		background: #f8d7da;
 		color: #721c24;

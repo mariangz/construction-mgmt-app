@@ -78,9 +78,15 @@
 </script>
 
 <main class="container">
-	<header class="page-header">
-		<h1>📝 Add New Report</h1>
-	</header>
+	<nav aria-label="breadcrumb">
+		<ul>
+			<li><a href="/">Home</a></li>
+			<li><a href="/reports">Reports</a></li>
+			<li>New Report</li>
+		</ul>
+	</nav>
+
+	<h1>📝 Add New Report</h1>
 
 	{#if errorMessage}
 		<article class="error">
@@ -232,16 +238,6 @@
 	.container {
 		max-width: 800px;
 		margin: 0 auto;
-		padding: 2rem 1rem;
-	}
-
-	.page-header {
-		text-align: center;
-		margin-bottom: 2rem;
-	}
-
-	.page-header h1 {
-		font-size: 2rem;
 	}
 
 	.report-form {
