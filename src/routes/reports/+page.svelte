@@ -13,8 +13,7 @@
 
 	async function loadReports() {
 		try {
-			const allDocs = await appDatabase.getAllTasks();
-			reports = allDocs.filter(doc => doc.type === 'report');
+			reports = await appDatabase.getAllReports();
 			filteredReports = reports;
 		} catch (error) {
 			console.error('Error loading reports:', error);

@@ -6,9 +6,16 @@ async function getDb() {
 		// check if we're running in the browser
 		if (typeof window !== 'undefined') {
 			// dynamic import, only load PouchDB in browser
-			const { default: PouchDB } = await import('pouchdb-browser');
+			const PouchDB = (await import('pouchdb-browser')).default;
+			const PouchDBFind = (await import('pouchdb-find')).default;
+
+			// add the find plugin
+			PouchDB.plugin(PouchDBFind);
+
 			// create local database 'construction-app'
 			db = new PouchDB('construction-app');
+			// create index on type field
+			await createTypeIndex();
 		} else {
 			// database not available
 			throw new Error('Database not available during SSR');
@@ -17,13 +24,28 @@ async function getDb() {
 	return db;
 }
 
-	// mark a document as synced
-	async function markAsSynced(doc) {
+// index on type field function
+async function createTypeIndex() {
+	try {
 		const db = await getDb();
-		doc.synced = true;
-		doc.updatedAt = new Date().toISOString();
-		await db.put(doc);
+		await db.createIndex({
+			index: {
+				fields: ['type']
+			}
+		});
+		console.log('Type index created successfully');
+	} catch (error) {
+		console.log('Type index error creating:', error.message);
 	}
+}
+
+// mark a document as synced
+async function markAsSynced(doc) {
+	const db = await getDb();
+	doc.synced = true;
+	doc.updatedAt = new Date().toISOString();
+	await db.put(doc);
+}
 
 // export object with all database operations
 // tasks
@@ -83,6 +105,7 @@ export const appDatabase = {
 				status: report.status || 'draft', // draft, completed, submitted
 				dueDate: report.dueDate || null,
 				materials: report.materials || null, // optional
+				findings: report.findings || null, // optional
 				recommendations: report.recommendations || null,
 				synced: false,
 				createdAt: now,
@@ -100,20 +123,37 @@ export const appDatabase = {
 		}
 	},
 
-	// get all documents from the database (tasks, reports, etc)
+	// get all tasks from the database
 	async getAllTasks() {
 		try {
 			const db = await getDb();
+			const result = await db.find({
+				selector: {
+					type: 'task'
+				}
+			});
+			console.log(result);
+			return result.docs;
+		} catch (error) {
+			console.error('Error fetching tasks:', error);
+			throw error;
+		}
+	},
 
-			// get all documents with their content
-			const result = await db.allDocs({
-				include_docs: true //  full document with all fields
+	// get all reports from the database
+	async getAllReports() {
+		try {
+			const db = await getDb();
+			const result = await db.find({
+				selector: {
+					type: 'report'
+				}
 			});
 			console.log(result);
 
-			return result.rows.map((row) => row.doc);
+			return result.docs;
 		} catch (error) {
-			console.error('Error fetching tasks:', error);
+			console.error('Error fetching reports:', error);
 			throw error;
 		}
 	},
@@ -170,20 +210,24 @@ export const appDatabase = {
 	// upload any local changes to remote, download any remote changes to local
 	async syncOnce(remoteUrl) {
 		const db = await getDb();
-		return db.sync(remoteUrl).on('change', async (info) => {
-			console.log('Sync change:', info);
-			// mark documents as synced when they are synced
-			if (info.change?.docs) {
-				for (const change of info.change.docs) {
-					if ((change.type === 'task' || change.type === 'report') && !change.synced) {
-						await markAsSynced(change);
+		return db
+			.sync(remoteUrl)
+			.on('change', async (info) => {
+				console.log('Sync change:', info);
+				// mark documents as synced when they are synced
+				if (info.change?.docs) {
+					for (const change of info.change.docs) {
+						if ((change.type === 'task' || change.type === 'report') && !change.synced) {
+							await markAsSynced(change);
+						}
 					}
 				}
-			}
-		}).on('complete', (info) => {
-			console.log('Sync completed:', info);
-		}).on('error', (err) => {
-			console.error('Sync error:', err);
-		});
+			})
+			.on('complete', (info) => {
+				console.log('Sync completed:', info);
+			})
+			.on('error', (err) => {
+				console.error('Sync error:', err);
+			});
 	}
 };
