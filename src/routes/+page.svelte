@@ -9,6 +9,7 @@
 	let isConfigured = false;
 	let unsyncedCounts = { tasks: 0, reports: 0 };
 	let loadingCounts = true;
+	let currentUser = '';
 
 	// load settings when the app starts
 	onMount(() => {
@@ -24,7 +25,8 @@
 				// parse the JSON settings from localStorage
 				couchdbSettings = JSON.parse(stored);
 				// check if we have the required fields
-				isConfigured = !!(couchdbSettings.username && couchdbSettings.password);
+				isConfigured = !!(couchdbSettings.username && couchdbSettings.password && couchdbSettings.displayName);
+				currentUser = couchdbSettings.displayName || 'Unknown User';
 			} catch (e) {
 				console.error('Error loading settings:', e);
 				isConfigured = false;
@@ -110,6 +112,7 @@
 		{#if isConfigured}
 			<!-- couchDB is configured - show current user -->
 			<p>✅ CouchDB configured: <strong>{couchdbSettings.username}</strong></p>
+			<p>👤 Logged in as: <strong>{currentUser}</strong></p>
 		{:else}
 			<!-- couchDB not configured -->
 			<p>⚙️ <a href="/settings">Configure CouchDB settings</a> to enable sync</p>

@@ -407,6 +407,10 @@
 							<strong>Updated:</strong>
 							<span>{formatDateTime(report.updatedAt)}</span>
 						</div>
+						<div class="meta-item">
+							<strong>Created by:</strong>
+							<span>{report.createdBy || 'Unknown'}</span>
+						</div>
 					</div>
 				</div>
 			</article>

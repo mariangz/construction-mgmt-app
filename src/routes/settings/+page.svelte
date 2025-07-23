@@ -4,6 +4,7 @@
 
 	let username = '';
 	let password = '';
+	let displayName = '';
 	let serverUrl = 'http://localhost:5984';
 	let message = '';
 	let messageType = '';
@@ -17,6 +18,7 @@
 				const settings = JSON.parse(stored);
 				username = settings.username || '';
 				password = settings.password || '';
+				displayName = settings.displayName || '';
 				serverUrl = settings.serverUrl || 'http://localhost:5984';
 			} catch (e) {
 				console.error('Error loading settings:', e);
@@ -27,8 +29,8 @@
 	async function saveSettings(event) {
 		event.preventDefault();
 
-		if (!username || !password) {
-			showMessage('Please enter both username and password', 'error');
+		if (!username || !password || !displayName) {
+			showMessage('Please enter username, password, and display name', 'error');
 			return;
 		}
 
@@ -39,6 +41,7 @@
 			const settings = {
 				username: username.trim(),
 				password: password.trim(),
+				displayName: displayName.trim(),
 				serverUrl: serverUrl.trim()
 			};
 
@@ -133,8 +136,22 @@
 						<input
 							type="text"
 							id="username"
+							name="username"
 							bind:value={username}
-							placeholder="admin"
+							placeholder="Enter CouchDB username"
+							required
+							disabled={isSaving}
+						/>
+					</label>
+
+					<label for="displayName">
+						Display Name *
+						<input
+							type="text"
+							id="displayName"
+							name="displayName"
+							bind:value={displayName}
+							placeholder="Enter your display name"
 							required
 							disabled={isSaving}
 						/>

@@ -71,6 +71,7 @@
 						{#if report.assignedTo}
 							<span class="report-assigned">Assigned to: {report.assignedTo}</span>
 						{/if}
+						<span class="report-creator">Created by: {report.createdBy || 'Unknown'}</span>
 					</div>
 					<div class="report-actions">
 						<a href="/reports/{report._id}" class="view-button">View</a>
@@ -201,6 +202,11 @@
 		margin-bottom: 1rem;
 		font-size: 0.9rem;
 		color: #666;
+	}
+
+	.report-creator {
+		font-style: italic;
+		color: #007bff;
 	}
 
 	.report-actions {

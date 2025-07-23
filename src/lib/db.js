@@ -44,6 +44,20 @@ async function createTypeIndex() {
 	}
 }
 
+// get display name from localStorage settings
+function getDisplayName() {
+	try {
+		const stored = localStorage.getItem('couchdb-settings');
+		if (stored) {
+			const settings = JSON.parse(stored);
+			return settings.displayName || 'Unknown User';
+		}
+	} catch (error) {
+		console.error('Error getting display name:', error);
+	}
+	return 'Unknown User';
+}
+
 // mark a document as synced
 async function markAsSynced(doc) {
 	const db = await getDb();
@@ -74,7 +88,7 @@ export const appDatabase = {
 				synced: false,
 				createdAt: now,
 				updatedAt: now,
-				createdBy: 'admin' // default
+				createdBy: getDisplayName()
 			};
 
 			// save to PouchDB using post() to auto-generate ID
@@ -115,7 +129,7 @@ export const appDatabase = {
 				synced: false,
 				createdAt: now,
 				updatedAt: now,
-				createdBy: 'admin' // default
+				createdBy: getDisplayName()
 			};
 
 			// save to PouchDB using post() to auto-generate ID

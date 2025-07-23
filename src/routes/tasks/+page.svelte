@@ -70,6 +70,7 @@
 						<div class="task-meta">
 							<small>Due: {formatDate(task.date)}</small>
 							<small>Status: <mark>{task.status || 'open'}</mark> {task.synced ? '✅' : '⏳'}</small>
+							<small>Created by: {task.createdBy || 'Unknown'}</small>
 						</div>
 						<a href="/tasks/{task._id}" role="button" class="outline">View Details</a>
 					</footer>
@@ -149,6 +150,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
+	}
+
+	.task-meta small:last-child {
+		font-style: italic;
+		color: #007bff
 	}
 
 	.bottom-nav {
