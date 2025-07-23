@@ -1,5 +1,6 @@
 // all local database operations using PouchDB
 let db = null;
+let indexCreated = false;
 
 async function getDb() {
 	if (!db) {
@@ -14,8 +15,12 @@ async function getDb() {
 
 			// create local database 'construction-app'
 			db = new PouchDB('construction-app');
-			// create index on type field
-			await createTypeIndex();
+
+			// if the index hasn't been created, create it
+			if (!indexCreated) {
+				await createTypeIndex();
+				indexCreated = true;
+			}
 		} else {
 			// database not available
 			throw new Error('Database not available during SSR');
@@ -30,7 +35,7 @@ async function createTypeIndex() {
 		const db = await getDb();
 		await db.createIndex({
 			index: {
-				fields: ['type']
+				fields: ['synced', 'type']
 			}
 		});
 		console.log('Type index created successfully');
@@ -229,5 +234,25 @@ export const appDatabase = {
 			.on('error', (err) => {
 				console.error('Sync error:', err);
 			});
+	},
+
+	// get the number of unsynced documents for each type
+	async getUnsyncedCounts() {
+		const db = await getDb();
+		const result = await db.find({
+			selector: {
+				synced: false
+			}
+		});
+		console.log('unsynced docs', result);
+		let tasks = 0;
+		let reports = 0;
+
+		for (const doc of result.docs) {
+			if (doc.type === 'task') tasks++;
+			if (doc.type === 'report') reports++;
+		}
+
+		return { tasks, reports };
 	}
 };

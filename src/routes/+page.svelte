@@ -7,10 +7,13 @@
 	let syncMessage = '';
 	let couchdbSettings = null;
 	let isConfigured = false;
+	let unsyncedCounts = { tasks: 0, reports: 0 };
+	let loadingCounts = true;
 
 	// load settings when the app starts
 	onMount(() => {
 		loadSettings();
+		loadUnsyncedCounts();
 	});
 
 	// load CouchDB settings from browser's localStorage (if they exist)
@@ -26,6 +29,20 @@
 				console.error('Error loading settings:', e);
 				isConfigured = false;
 			}
+		}
+	}
+
+	// load unsynced counts
+	async function loadUnsyncedCounts() {
+		try {
+			loadingCounts = true;
+			unsyncedCounts = await appDatabase.getUnsyncedCounts();
+			console.log('unsyncedCounts', unsyncedCounts);
+		} catch (error) {
+			console.error('Error loading unsynced counts:', error);
+			unsyncedCounts = { tasks: 0, reports: 0 };
+		} finally {
+			loadingCounts = false;
 		}
 	}
 
@@ -58,6 +75,9 @@
 			console.log('Sync completed');
 			syncState = 'success';
 			syncMessage = 'Sync completed successfully!';
+
+			// reload counts after successful sync
+			loadUnsyncedCounts();
 
 		} catch (error) {
 			console.error('Error syncing with CouchDB:', error);
@@ -151,6 +171,37 @@
 			<!-- show sync status message if there is one -->
 			{#if syncMessage}
 				<p class="sync-message {syncState}">{syncMessage}</p>
+			{/if}
+		</div>
+	{/if}
+
+	<!-- unsynced items -->
+	{#if loadingCounts}
+		<div class="unsynced-items">
+			<h2>📊 Sync Status</h2>
+			<p>Loading unsynced items...</p>
+		</div>
+	{:else}
+		<div class="unsynced-items">
+			<h2>📊 Sync Status</h2>
+			{#if unsyncedCounts.tasks === 0 && unsyncedCounts.reports === 0}
+				<p class="all-synced">✅ All items are synced</p>
+			{:else}
+				<div class="unsynced-counts">
+					<div class="count-item">
+						<span class="count-number">{unsyncedCounts.tasks}</span>
+						<span class="count-label">Unsynced Tasks</span>
+					</div>
+					<div class="count-item">
+						<span class="count-number">{unsyncedCounts.reports}</span>
+						<span class="count-label">Unsynced Reports</span>
+					</div>
+				</div>
+				{#if isConfigured}
+					<p class="sync-hint">💡 Use the sync button above to sync these items</p>
+				{:else}
+					<p class="sync-hint">⚠️ Configure CouchDB settings to enable sync</p>
+				{/if}
 			{/if}
 		</div>
 	{/if}
@@ -321,6 +372,62 @@
 		border: 1px solid #f5c6cb;
 	}
 
+	.unsynced-items {
+		background: #f8f9fa;
+		border: 2px solid #efeae9;
+		border-radius: 12px;
+		padding: 2rem;
+		margin-top: 2rem;
+		text-align: center;
+	}
+
+	.unsynced-items h2 {
+		font-size: 1.5rem;
+		font-weight: 600;
+		margin-bottom: 1rem;
+	}
+
+	.unsynced-items p {
+		font-size: 1.1rem;
+		color: #666;
+		margin: 0.5rem 0;
+	}
+
+	.all-synced {
+		color: #28a745;
+		font-weight: 600;
+	}
+
+	.unsynced-counts {
+		display: flex;
+		justify-content: center;
+		gap: 2rem;
+		margin-bottom: 1rem;
+	}
+
+	.count-item {
+		text-align: center;
+	}
+
+	.count-number {
+		font-size: 2.5rem;
+		font-weight: 700;
+		color: #007bff;
+		display: block;
+	}
+
+	.count-label {
+		font-size: 0.9rem;
+		color: #666;
+		margin-top: 0.5rem;
+	}
+
+	.sync-hint {
+		font-size: 0.9rem;
+		color: #666;
+		margin-top: 0.5rem;
+	}
+
 	@media (max-width: 600px) {
 		.container {
 			padding: 1rem;
@@ -347,6 +454,11 @@
 		.sync-button {
 			width: 100%;
 			padding: 1.25rem 1rem;
+		}
+
+		.unsynced-counts {
+			flex-direction: column;
+			gap: 1rem;
 		}
 	}
 </style>
