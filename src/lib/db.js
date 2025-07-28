@@ -58,14 +58,6 @@ function getDisplayName() {
 	return 'Unknown User';
 }
 
-// mark a document as synced
-async function markAsSynced(doc) {
-	const db = await getDb();
-	doc.synced = true;
-	doc.updatedAt = new Date().toISOString();
-	await db.put(doc);
-}
-
 // export object with all database operations
 // tasks
 export const appDatabase = {
@@ -233,13 +225,17 @@ export const appDatabase = {
 			.sync(remoteUrl)
 			.on('change', async (info) => {
 				console.log('Sync change:', info);
-				// mark documents as synced when they are synced
-				if (info.change?.docs) {
-					for (const change of info.change.docs) {
-						if ((change.type === 'task' || change.type === 'report') && !change.synced) {
-							await markAsSynced(change);
-						}
-					}
+				// mark documents as synced when they are synced, use bulkDocs to update multiple documents at once
+				const docsToUpdate = info.change.docs
+				.filter(doc => (doc.type === 'task' || doc.type === 'report') && !doc.synced)
+				.map(doc => ({
+					...doc,
+					synced: true,
+					updatedAt: new Date().toISOString()
+				}))
+				if (docsToUpdate.length > 0) {
+					console.log('Updating docs to synced:', docsToUpdate);
+					await db.bulkDocs(docsToUpdate);
 				}
 			})
 			.on('complete', (info) => {
