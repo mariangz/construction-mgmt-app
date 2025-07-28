@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 // all local database operations using PouchDB
 let db = null;
 let indexCreated = false;
@@ -71,6 +72,7 @@ export const appDatabase = {
 
 			// create task document (no _id, the db will generate it)
 			const doc = {
+				_id: `task:${uuidv4()}`,
 				type: 'task', // document type for filtering for the view
 				title: task.title,
 				date: task.date,
@@ -83,8 +85,8 @@ export const appDatabase = {
 				createdBy: getDisplayName()
 			};
 
-			// save to PouchDB using post() to auto-generate ID
-			const result = await db.post(doc);
+			// save to PouchDB using put() with a generated _id
+			const result = await db.put(doc);
 			console.log('Task saved offline:', doc);
 			console.log('result', result);
 			return result;
@@ -106,6 +108,7 @@ export const appDatabase = {
 
 			// create report document (no _id, the db will generate it)
 			const doc = {
+				_id: `report:${uuidv4()}`,
 				type: 'report', // document type
 				title: report.title,
 				description: report.description,
@@ -124,8 +127,8 @@ export const appDatabase = {
 				createdBy: getDisplayName()
 			};
 
-			// save to PouchDB using post() to auto-generate ID
-			const result = await db.post(doc);
+			// save to PouchDB using put() with a generated _id
+			const result = await db.put(doc);
 			console.log('Report saved offline:', doc);
 			return result;
 		} catch (error) {
