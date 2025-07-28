@@ -36,7 +36,7 @@ async function createTypeIndex() {
 		const db = await getDb();
 		await db.createIndex({
 			index: {
-				fields: ['synced', 'type']
+				fields: ['synced']
 			}
 		});
 		console.log('Type index created successfully');
@@ -141,13 +141,15 @@ export const appDatabase = {
 	async getAllTasks() {
 		try {
 			const db = await getDb();
-			const result = await db.find({
-				selector: {
-					type: 'task'
-				}
+			const result = await db.allDocs({
+				include_docs: true,
+				startkey: 'task:',
+				endkey: 'task:\uffff',
+				limit: 20
 			});
-			console.log(result);
-			return result.docs;
+
+			console.log('all tasks', result);
+			return result.rows.map(row => row.doc);
 		} catch (error) {
 			console.error('Error fetching tasks:', error);
 			throw error;
@@ -158,14 +160,14 @@ export const appDatabase = {
 	async getAllReports() {
 		try {
 			const db = await getDb();
-			const result = await db.find({
-				selector: {
-					type: 'report'
-				}
+			const result = await db.allDocs({
+				include_docs: true,
+				startkey: 'report:',
+				endkey: 'report:\uffff',
+				limit: 20
 			});
-			console.log(result);
-
-			return result.docs;
+			console.log('all reports', result);
+			return result.rows.map(row => row.doc);
 		} catch (error) {
 			console.error('Error fetching reports:', error);
 			throw error;
