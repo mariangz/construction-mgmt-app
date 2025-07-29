@@ -155,6 +155,26 @@ export const appDatabase = {
 		}
 	},
 
+	// get paginated tasks
+	async getTasksPage({ limit = 10, startAfter = null }) {
+		const db = await getDb();
+
+		const options = {
+			include_docs: true,
+			startkey: startAfter || 'task:',
+			endkey: 'task:\uffff',
+			limit
+		};
+
+		if (startAfter) {
+			options.skip = 1;
+			options.startkey = startAfter;
+		}
+
+		const result = await db.allDocs(options);
+		return result.rows.map(row => row.doc);
+	},
+
 	// get all reports from the database
 	async getAllReports() {
 		try {
@@ -170,6 +190,26 @@ export const appDatabase = {
 			console.error('Error fetching reports:', error);
 			throw error;
 		}
+	},
+
+	// get paginated reports
+	async getReportsPage({ limit = 10, startAfter = null }) {
+		const db = await getDb();
+
+		const options = {
+			include_docs: true,
+			startkey: startAfter || 'report:',
+			endkey: 'report:\uffff',
+			limit
+		};
+
+		if (startAfter) {
+			options.skip = 1;
+			options.startkey = startAfter;
+		}
+
+		const result = await db.allDocs(options);
+		return result.rows.map(row => row.doc);
 	},
 
 	// get a single document by id
