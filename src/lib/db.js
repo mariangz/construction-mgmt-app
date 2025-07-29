@@ -144,8 +144,7 @@ export const appDatabase = {
 			const result = await db.allDocs({
 				include_docs: true,
 				startkey: 'task:',
-				endkey: 'task:\uffff',
-				limit: 20
+				endkey: 'task:\uffff'
 			});
 
 			console.log('all tasks', result);
@@ -163,8 +162,7 @@ export const appDatabase = {
 			const result = await db.allDocs({
 				include_docs: true,
 				startkey: 'report:',
-				endkey: 'report:\uffff',
-				limit: 20
+				endkey: 'report:\uffff'
 			});
 			console.log('all reports', result);
 			return result.rows.map(row => row.doc);
