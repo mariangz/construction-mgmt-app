@@ -156,7 +156,7 @@ export const appDatabase = {
 	},
 
 	// get paginated tasks
-	async getTasksPage({ limit = 10, startAfter = null }) {
+	async getTasksPage({ limit = 10, startAfter = null } = {}) {
 		const db = await getDb();
 
 		const options = {
@@ -193,7 +193,7 @@ export const appDatabase = {
 	},
 
 	// get paginated reports
-	async getReportsPage({ limit = 10, startAfter = null }) {
+	async getReportsPage({ limit = 10, startAfter = null } = {}) {
 		const db = await getDb();
 
 		const options = {

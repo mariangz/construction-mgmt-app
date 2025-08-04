@@ -5,25 +5,43 @@
 
 	let tasks = [];
 	let loading = true;
-	let error = null;
+	let loadingMore = false;
+	let noMoreTasks = false;
 
 	onMount(() => {
 		loadTasks();
 	});
 
 	async function loadTasks() {
-		// only run on the browser
 		if (!browser) return;
-
 		try {
 			loading = true;
-			error = null;
-			tasks = await appDatabase.getAllTasks();
+			tasks = await appDatabase.getTasksPage();
 		} catch (err) {
-			error = 'Failed to load tasks. Please try again.';
 			console.error('Error loading tasks:', err);
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function loadMore() {
+		if (loadingMore || tasks.length === 0) return;
+
+		try {
+			loadingMore = true;
+			const lastId = tasks[tasks.length - 1]._id;
+			console.log('lastId', lastId);
+			const moreTasks = await appDatabase.getTasksPage({ startAfter: lastId });
+			if (moreTasks.length > 0) {
+				tasks = [...tasks, ...moreTasks];
+			}
+			if (moreTasks.length < 10) {
+				noMoreTasks = true;
+			}
+		} catch (err) {
+			console.error('Error loading more tasks:', err);
+		} finally {
+			loadingMore = false;
 		}
 	}
 
@@ -48,11 +66,6 @@
 
 	{#if loading}
 		<article>Loading tasks...</article>
-	{:else if error}
-		<article class="error">
-			{error}
-			<button onclick={loadTasks}>Try Again</button>
-		</article>
 	{:else if tasks.length === 0}
 		<div class="empty-state">
 			<p>No tasks found.</p>
@@ -69,7 +82,8 @@
 					<footer>
 						<div class="task-meta">
 							<small>Due: {formatDate(task.date)}</small>
-							<small>Status: <mark>{task.status || 'open'}</mark> {task.synced ? '✅' : '⏳'}</small>
+							<small>Status: <mark>{task.status || 'open'}</mark> {task.synced ? '✅' : '⏳'}</small
+							>
 							<small>Created by: {task.createdBy || 'Unknown'}</small>
 						</div>
 						<a href="/tasks/{task._id}" role="button" class="outline">View Details</a>
@@ -77,6 +91,14 @@
 				</article>
 			{/each}
 		</div>
+
+		{#if !noMoreTasks}
+			<div class="load-more">
+				<button onclick={loadMore} disabled={loadingMore}>
+					{loadingMore ? 'Loading...' : 'Load More'}
+				</button>
+			</div>
+		{/if}
 	{/if}
 
 	<nav class="bottom-nav">
@@ -129,7 +151,6 @@
 		border: 2px solid #e9ecef;
 		border-radius: 12px;
 		padding: 1.5rem;
-
 	}
 
 	.task-description {
@@ -154,9 +175,22 @@
 
 	.task-meta small:last-child {
 		font-style: italic;
-		color: #007bff
+		color: #007bff;
 	}
 
+	.load-more {
+		text-align: center;
+		margin: 2rem 0;
+	}
+
+	.load-more button {
+		background: #007bff;
+		border: none;
+		padding: 0.75rem 2rem;
+		border-radius: 8px;
+		cursor: pointer;
+		transition: background 0.2s ease;
+	}
 	.bottom-nav {
 		margin-top: 2rem;
 		padding-top: 2rem;
