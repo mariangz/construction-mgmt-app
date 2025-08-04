@@ -1,22 +1,47 @@
 <script>
 	import { onMount } from 'svelte';
 	import { appDatabase } from '$lib/db';
+	import { browser } from '$app/environment';
 
 	let reports = [];
 	let isLoading = true;
-	let filteredReports = [];
+	let loadingMore = false;
+	let noMoreTasks = false;
 
 	onMount(async () => {
 		await loadReports();
-		isLoading = false;
 	});
 
 	async function loadReports() {
+		if (!browser) return;
 		try {
-			reports = await appDatabase.getAllReports();
-			filteredReports = reports;
-		} catch (error) {
-			console.error('Error loading reports:', error);
+			isLoading = true;
+			reports = await appDatabase.getReportsPage();
+		} catch (err) {
+			console.error('Error loading reports:', err);
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	async function loadMore() {
+		if (loadingMore || reports.length === 0) return;
+
+		try {
+			loadingMore = true;
+			const lastId = reports[reports.length - 1]._id;
+			console.log('lastId', lastId);
+			const moreReports = await appDatabase.getReportsPage({ startAfter: lastId });
+			if (moreReports.length > 0) {
+				reports = [...reports, ...moreReports];
+			}
+			if (moreReports.length < 10) {
+				noMoreTasks = true;
+			}
+		} catch (err) {
+			console.error('Error loading more reports:', err);
+		} finally {
+			loadingMore = false;
 		}
 	}
 
@@ -45,25 +70,27 @@
 	</nav>
 	<div class="headings">
 		<h1>📊 Reports</h1>
-		{#if filteredReports.length > 0}
+		{#if reports.length > 0}
 			<a href="/reports/new" class="add-button">➕ Add Report</a>
 		{/if}
 	</div>
 
 	{#if isLoading}
 		<div class="loading">Loading reports...</div>
-	{:else if filteredReports.length === 0}
+	{:else if reports.length === 0}
 		<div class="empty-state">
 			<p>No reports found.</p>
 			<a href="/reports/new" class="add-button">Create your first report</a>
 		</div>
 	{:else}
 		<div class="reports-grid">
-			{#each filteredReports as report}
+			{#each reports as report}
 				<div class="report-card">
 					<div class="report-header">
 						<h3 class="report-title">{report.title}</h3>
-						<span class="status-badge {report.status}">{report.status} {report.synced ? '✅' : '⏳'}</span>
+						<span class="status-badge {report.status}"
+							>{report.status} {report.synced ? '✅' : '⏳'}</span
+						>
 					</div>
 					<p class="report-description">{report.description}</p>
 					<div class="report-meta">
@@ -75,13 +102,19 @@
 					</div>
 					<div class="report-actions">
 						<a href="/reports/{report._id}" class="view-button">View</a>
-						<button class="delete-button" onclick={() => deleteReport(report._id)}>
-							Delete
-						</button>
+						<button class="delete-button" onclick={() => deleteReport(report._id)}> Delete </button>
 					</div>
 				</div>
 			{/each}
 		</div>
+
+		{#if !noMoreTasks}
+			<div class="load-more">
+				<button onclick={loadMore} disabled={loadingMore}>
+					{loadingMore ? 'Loading...' : 'Load More'}
+				</button>
+			</div>
+		{/if}
 	{/if}
 
 	<nav class="bottom-nav">
@@ -90,8 +123,6 @@
 </main>
 
 <style>
-
-
 	.headings {
 		display: flex;
 		justify-content: space-between;
@@ -241,6 +272,31 @@
 
 	.delete-button:hover {
 		background: #c82333;
+	}
+
+	.load-more {
+		text-align: center;
+		margin: 2rem 0;
+	}
+
+	.load-more button {
+		background: #007bff;
+		color: white;
+		border: none;
+		padding: 0.75rem 2rem;
+		border-radius: 8px;
+		font-size: 1rem;
+		cursor: pointer;
+		transition: background 0.2s ease;
+	}
+
+	.load-more button:hover:not(:disabled) {
+		background: #0056b3;
+	}
+
+	.load-more button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 
 	.bottom-nav {

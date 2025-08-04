@@ -148,7 +148,7 @@ export const appDatabase = {
 			});
 
 			console.log('all tasks', result);
-			return result.rows.map(row => row.doc);
+			return result.rows.map((row) => row.doc);
 		} catch (error) {
 			console.error('Error fetching tasks:', error);
 			throw error;
@@ -172,7 +172,7 @@ export const appDatabase = {
 		}
 
 		const result = await db.allDocs(options);
-		return result.rows.map(row => row.doc);
+		return result.rows.map((row) => row.doc);
 	},
 
 	// get all reports from the database
@@ -185,7 +185,7 @@ export const appDatabase = {
 				endkey: 'report:\uffff'
 			});
 			console.log('all reports', result);
-			return result.rows.map(row => row.doc);
+			return result.rows.map((row) => row.doc);
 		} catch (error) {
 			console.error('Error fetching reports:', error);
 			throw error;
@@ -209,7 +209,7 @@ export const appDatabase = {
 		}
 
 		const result = await db.allDocs(options);
-		return result.rows.map(row => row.doc);
+		return result.rows.map((row) => row.doc);
 	},
 
 	// get a single document by id
@@ -270,12 +270,12 @@ export const appDatabase = {
 				console.log('Sync change:', info);
 				// mark documents as synced when they are synced, use bulkDocs to update multiple documents at once
 				const docsToUpdate = info.change.docs
-				.filter(doc => (doc.type === 'task' || doc.type === 'report') && !doc.synced)
-				.map(doc => ({
-					...doc,
-					synced: true,
-					updatedAt: new Date().toISOString()
-				}))
+					.filter((doc) => (doc.type === 'task' || doc.type === 'report') && !doc.synced)
+					.map((doc) => ({
+						...doc,
+						synced: true,
+						updatedAt: new Date().toISOString()
+					}));
 				if (docsToUpdate.length > 0) {
 					console.log('Updating docs to synced:', docsToUpdate);
 					await db.bulkDocs(docsToUpdate);
