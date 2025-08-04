@@ -6,7 +6,7 @@
 	let reports = [];
 	let isLoading = true;
 	let loadingMore = false;
-	let noMoreTasks = false;
+	let noMoreReports= false;
 
 	onMount(async () => {
 		await loadReports();
@@ -17,6 +17,9 @@
 		try {
 			isLoading = true;
 			reports = await appDatabase.getReportsPage();
+			if (reports.length < 10) {
+				noMoreReports = true;
+			}
 		} catch (err) {
 			console.error('Error loading reports:', err);
 		} finally {
@@ -36,7 +39,7 @@
 				reports = [...reports, ...moreReports];
 			}
 			if (moreReports.length < 10) {
-				noMoreTasks = true;
+				noMoreReports = true;
 			}
 		} catch (err) {
 			console.error('Error loading more reports:', err);
@@ -108,7 +111,7 @@
 			{/each}
 		</div>
 
-		{#if !noMoreTasks}
+		{#if !noMoreReports}
 			<div class="load-more">
 				<button onclick={loadMore} disabled={loadingMore}>
 					{loadingMore ? 'Loading...' : 'Load More'}

@@ -17,6 +17,9 @@
 		try {
 			loading = true;
 			tasks = await appDatabase.getTasksPage();
+			if (tasks.length < 10) {
+				noMoreTasks = true;
+			}
 		} catch (err) {
 			console.error('Error loading tasks:', err);
 		} finally {
