@@ -138,22 +138,22 @@ export const appDatabase = {
 	},
 
 	// get all tasks from the database
-	async getAllTasks() {
-		try {
-			const db = await getDb();
-			const result = await db.allDocs({
-				include_docs: true,
-				startkey: 'task:',
-				endkey: 'task:\uffff'
-			});
+	// async getAllTasks() {
+	// 	try {
+	// 		const db = await getDb();
+	// 		const result = await db.allDocs({
+	// 			include_docs: true,
+	// 			startkey: 'task:',
+	// 			endkey: 'task:\uffff'
+	// 		});
 
-			console.log('all tasks', result);
-			return result.rows.map((row) => row.doc);
-		} catch (error) {
-			console.error('Error fetching tasks:', error);
-			throw error;
-		}
-	},
+	// 		console.log('all tasks', result);
+	// 		return result.rows.map((row) => row.doc);
+	// 	} catch (error) {
+	// 		console.error('Error fetching tasks:', error);
+	// 		throw error;
+	// 	}
+	// },
 
 	// get paginated tasks
 	async getTasksPage({ limit = 10, startAfter = null } = {}) {
