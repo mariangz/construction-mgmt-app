@@ -15,6 +15,7 @@
 	let recommendations = '';
 	let isSubmitting = false;
 	let errorMessage = '';
+	let files = [];
 
 	const reportTypes = [
 		{ value: 'inspection', label: 'Inspection Report' },
@@ -60,7 +61,13 @@
 				recommendations: recommendations.trim() || null
 			};
 
-			await appDatabase.addReport(reportData);
+			const result = await appDatabase.addReport(reportData);
+			// add attachments if any
+			if (files && files.length > 0) {
+				for (const file of files) {
+					await appDatabase.addAttachment(result.id, file);
+				}
+			}
 			goto('/reports');
 		} catch (error) {
 			console.error('Error creating report:', error);
@@ -221,6 +228,21 @@
 					disabled={isSubmitting}
 				></textarea>
 			</div>
+		</div>
+
+		<div class="form-group">
+			<label for="fileUpload">
+				Upload File
+				<input
+					type="file"
+					id="fileUpload"
+					name="fileUpload"
+					accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+					multiple
+					onchange={(e) => (files = Array.from(e.currentTarget.files || []))}
+					disabled={isSubmitting}
+				/>
+			</label>
 		</div>
 
 		<div class="form-actions">

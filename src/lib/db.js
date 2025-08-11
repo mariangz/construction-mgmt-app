@@ -224,6 +224,19 @@ export const appDatabase = {
 		}
 	},
 
+	// add attachment
+	async addAttachment(docId, file, name = `${Date.now()}-${file.name}`) {
+		try {
+			const db = await getDb();
+			const doc = await db.get(docId);
+			const type = file?.type || 'application/octet-stream';
+			return db.putAttachment(docId, name, doc._rev, file, type);
+		} catch (error) {
+			console.error('Error adding attachment:', error);
+			throw error;
+		}
+	},
+
 	// update a document by id
 	async updateDocument(doc) {
 		try {
