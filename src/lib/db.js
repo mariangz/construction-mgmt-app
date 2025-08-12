@@ -229,10 +229,21 @@ export const appDatabase = {
 		try {
 			const db = await getDb();
 			const doc = await db.get(docId);
-			const type = file?.type || 'application/octet-stream';
+			const type = file?.type;
 			return db.putAttachment(docId, name, doc._rev, file, type);
 		} catch (error) {
 			console.error('Error adding attachment:', error);
+			throw error;
+		}
+	},
+
+	// get attachment
+	async getAttachment(docId, attachmentName) {
+		try {
+			const db = await getDb();
+			return await db.getAttachment(docId, attachmentName);
+		} catch (error) {
+			console.error('Error getting attachment:', error);
 			throw error;
 		}
 	},

@@ -71,6 +71,7 @@
 			loading = true;
 			error = null;
 			report = await appDatabase.getDocument(id);
+			console.log('Report loaded with attachments:', report._attachments);
 			// initialize edit form with current values
 			if (report) {
 				editTitle = report.title || '';
@@ -90,6 +91,20 @@
 			console.error('Error loading report:', err);
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function downloadAttachment(name) {
+		try {
+			const blob = await appDatabase.getAttachment(reportId, name);
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = name;
+			a.click();
+		} catch (err) {
+			alert('Failed to download attachment.');
+			console.error('Download error:', err);
 		}
 	}
 
@@ -457,6 +472,21 @@
 				</article>
 			{/if}
 
+			{#if report._attachments && Object.keys(report._attachments).length > 0}
+				<article class="report-content">
+					<header>
+						<h2>📎 Attachments</h2>
+					</header>
+					<div class="content-section">
+						<ul class="attachment-list">
+							{#each Object.keys(report._attachments) as name}
+								<li><button class="attachment-link" onclick={() => downloadAttachment(name)}>{name}</button></li>
+							{/each}
+						</ul>
+					</div>
+				</article>
+			{/if}
+
 			<div class="actions">
 				<a href="/reports" role="button" class="secondary">← Back to Reports</a>
 				<button onclick={startEdit} class="outline">Edit Report</button>
@@ -555,6 +585,30 @@
 	.content-section p {
 		margin: 0;
 		white-space: pre-wrap;
+	}
+
+	.attachment-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+
+	.attachment-list li {
+		padding: 0.5rem 0;
+		border-bottom: 1px solid #e9ecef;
+	}
+
+	.attachment-link {
+		background: none;
+		border: none;
+		color: #007bff;
+		cursor: pointer;
+		text-decoration: underline;
+		padding: 0;
+	}
+
+	.attachment-link:hover {
+		color: #0056b3;
 	}
 
 	.actions {
