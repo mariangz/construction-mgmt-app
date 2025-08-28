@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { appDatabase } from '$lib/db';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 
 	let report = null;
 	let loading = true;
@@ -22,6 +23,13 @@
 	let editMaterials = '';
 	let editFindings = '';
 	let editRecommendations = '';
+
+	// Map-related variables for edit mode
+	let editMapContainer;
+	let editMap;
+	let editMarker;
+	let editCoordinates = { lat: 0, lng: 0 };
+	let editMapInitialized = false;
 
 	const statusColors = {
 		draft: '#ffc107',
@@ -66,6 +74,16 @@
 		loadReport(reportId);
 	}
 
+	onMount(() => {
+		// Load Leaflet CSS and JS from CDN
+		loadLeaflet();
+		
+		// Initialize view map when report is loaded
+		$: if (report && report.coordinates && typeof L !== 'undefined') {
+			initializeViewMap();
+		}
+	});
+
 	async function loadReport(id) {
 		try {
 			loading = true;
@@ -85,6 +103,11 @@
 				editMaterials = report.materials || '';
 				editFindings = report.findings || '';
 				editRecommendations = report.recommendations || '';
+				
+				// Initialize coordinates for edit mode
+				if (report.coordinates) {
+					editCoordinates = report.coordinates;
+				}
 			}
 		} catch (err) {
 			error = 'Report not found or failed to load.';
@@ -127,6 +150,12 @@
 
 	function startEdit() {
 		editing = true;
+		// Initialize map when editing starts
+		setTimeout(() => {
+			if (typeof L !== 'undefined') {
+				initializeEditMap();
+			}
+		}, 100);
 	}
 
 	function cancelEdit() {
@@ -164,6 +193,7 @@
 				description: editDescription.trim(),
 				reportType: editReportType,
 				location: editLocation.trim(),
+				coordinates: editCoordinates, // Add coordinates to the updated report
 				assignedTo: editAssignedTo.trim() || null,
 				priority: editPriority,
 				status: editStatus,
@@ -206,6 +236,125 @@
 			hour: '2-digit',
 			minute: '2-digit'
 		});
+	}
+
+	async function loadLeaflet() {
+		// Load Leaflet CSS
+		if (!document.querySelector('link[href*="leaflet"]')) {
+			const link = document.createElement('link');
+			link.rel = 'stylesheet';
+			link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+			link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+			link.crossOrigin = '';
+			document.head.appendChild(link);
+		}
+
+		// Load Leaflet JS
+		if (typeof L === 'undefined') {
+			const script = document.createElement('script');
+			script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+			script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+			script.crossOrigin = '';
+			script.onload = () => {
+				if (editing) {
+					initializeEditMap();
+				}
+			};
+			document.head.appendChild(script);
+		}
+	}
+
+	function initializeEditMap() {
+		if (editMapInitialized || !editMapContainer) return;
+		
+		try {
+			// Use report coordinates or default location
+			const lat = editCoordinates.lat || 40.7128;
+			const lng = editCoordinates.lng || -74.0060;
+			
+			// Initialize the map
+			editMap = L.map(editMapContainer).setView([lat, lng], 13);
+			
+			// Add OpenStreetMap tiles
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}).addTo(editMap);
+
+			// Add click event to set marker
+			editMap.on('click', function(e) {
+				setEditMarker(e.latlng.lat, e.latlng.lng);
+			});
+
+			// Add marker if coordinates exist
+			if (editCoordinates.lat && editCoordinates.lng) {
+				setEditMarker(editCoordinates.lat, editCoordinates.lng);
+			}
+
+			editMapInitialized = true;
+		} catch (error) {
+			console.error('Error initializing edit map:', error);
+		}
+	}
+
+	function setEditMarker(lat, lng) {
+		editCoordinates = { lat, lng };
+		
+		// Remove existing marker
+		if (editMarker) {
+			editMap.removeLayer(editMarker);
+		}
+		
+		// Add new marker
+		editMarker = L.marker([lat, lng]).addTo(editMap);
+		
+		// Update location text field with coordinates
+		editLocation = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+		
+		// Add popup with coordinates
+		editMarker.bindPopup(`Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`).openPopup();
+	}
+
+	function getEditAddressFromCoordinates() {
+		if (editCoordinates.lat === 0 && editCoordinates.lng === 0) return;
+		
+		// Use reverse geocoding to get address
+		fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${editCoordinates.lat}&lon=${editCoordinates.lng}&zoom=18&addressdetails=1`)
+			.then(response => response.json())
+			.then(data => {
+				if (data.display_name) {
+					editLocation = data.display_name;
+				}
+			})
+			.catch(error => {
+				console.error('Error getting address:', error);
+			});
+	}
+
+	function initializeViewMap() {
+		if (!report || !report.coordinates) return;
+		
+		try {
+			const viewMapElement = document.getElementById('viewMap');
+			if (!viewMapElement) return;
+			
+			const lat = report.coordinates.lat;
+			const lng = report.coordinates.lng;
+			
+			// Initialize the view map
+			const viewMap = L.map(viewMapElement).setView([lat, lng], 15);
+			
+			// Add OpenStreetMap tiles
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}).addTo(viewMap);
+
+			// Add marker for the report location
+			L.marker([lat, lng]).addTo(viewMap)
+				.bindPopup(`Report Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`)
+				.openPopup();
+		} catch (error) {
+			console.error('Error initializing view map:', error);
+		}
 	}
 </script>
 
@@ -265,14 +414,34 @@
 
 					<div class="form-group">
 						<label for="editLocation">Location *</label>
-						<input
-							id="editLocation"
-							type="text"
-							bind:value={editLocation}
-							placeholder="e.g., Building A - Floor 3, etc."
-							required
-							disabled={saving}
-						/>
+						<div class="location-container">
+							<input
+								id="editLocation"
+								type="text"
+								bind:value={editLocation}
+								placeholder="Click on the map to set location or enter manually..."
+								required
+								disabled={saving}
+							/>
+							<button 
+								type="button" 
+								class="get-address-btn" 
+								onclick={getEditAddressFromCoordinates}
+								disabled={saving || (editCoordinates.lat === 0 && editCoordinates.lng === 0)}
+							>
+								📍 Get Address
+							</button>
+						</div>
+						
+						<div class="map-container">
+							<div class="map-instructions">
+								<p>🗺️ Click on the map below to set the exact location for your report</p>
+							</div>
+							<div bind:this={editMapContainer} class="map" id="editMap"></div>
+							<div class="coordinates-display">
+								<strong>Coordinates:</strong> {editCoordinates.lat.toFixed(6)}, {editCoordinates.lng.toFixed(6)}
+							</div>
+						</div>
 					</div>
 
 					<div class="form-group">
@@ -438,6 +607,23 @@
 					<p>{report.description}</p>
 				</div>
 			</article>
+
+			{#if report.coordinates && report.coordinates.lat && report.coordinates.lng}
+				<article class="report-content">
+					<header>
+						<h2>🗺️ Location</h2>
+					</header>
+					<div class="content-section">
+						<div class="location-info">
+							<p><strong>Address:</strong> {report.location}</p>
+							<p><strong>Coordinates:</strong> {report.coordinates.lat.toFixed(6)}, {report.coordinates.lng.toFixed(6)}</p>
+						</div>
+						<div class="map-container view-mode">
+							<div id="viewMap" class="map"></div>
+						</div>
+					</div>
+				</article>
+			{/if}
 
 			{#if report.materials}
 				<article class="report-content">
@@ -703,5 +889,88 @@
 		.report-form {
 			padding: 1.5rem;
 		}
+
+		.location-container {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.get-address-btn {
+			width: 100%;
+		}
+
+		.map {
+			height: 250px;
+		}
+	}
+
+	.location-container {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+
+	.get-address-btn {
+		background: #007bff;
+		color: white;
+		border: none;
+		padding: 0.5rem 1rem;
+		border-radius: 4px;
+		cursor: pointer;
+		font-size: 0.9rem;
+		white-space: nowrap;
+	}
+
+	.get-address-btn:hover:not(:disabled) {
+		background: #0056b3;
+	}
+
+	.get-address-btn:disabled {
+		background: #6c757d;
+		cursor: not-allowed;
+	}
+
+	.map-container {
+		margin-top: 1rem;
+		border: 1px solid #e9ecef;
+		border-radius: 8px;
+		overflow: hidden;
+	}
+
+	.map-container.view-mode {
+		margin-top: 0.5rem;
+	}
+
+	.map-instructions {
+		background: #f8f9fa;
+		padding: 0.75rem;
+		border-bottom: 1px solid #e9ecef;
+		text-align: center;
+		font-size: 0.9rem;
+		color: #6c757d;
+	}
+
+	.map {
+		height: 300px;
+		width: 100%;
+		background: #f8f9fa;
+	}
+
+	.coordinates-display {
+		background: #e9ecef;
+		padding: 0.5rem;
+		text-align: center;
+		font-family: monospace;
+		font-size: 0.9rem;
+		color: #495057;
+		border-top: 1px solid #dee2e6;
+	}
+
+	.location-info {
+		margin-bottom: 1rem;
+	}
+
+	.location-info p {
+		margin: 0.5rem 0;
 	}
 </style>
