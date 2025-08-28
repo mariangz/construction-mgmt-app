@@ -114,6 +114,7 @@ export const appDatabase = {
 				description: report.description,
 				reportType: report.reportType, // inspection, progress, safety, etc.
 				location: report.location,
+				coordinates: report.coordinates || null, // add coordinates field
 				assignedTo: report.assignedTo || null,
 				priority: report.priority || 'medium', // low, medium, high, urgent
 				status: report.status || 'draft', // draft, completed, submitted
