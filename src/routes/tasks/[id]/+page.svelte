@@ -17,6 +17,10 @@
 	let editDescription = '';
 	let editAssignedTo = '';
 	let editStatus = 'open';
+	let editCategory = 'general';
+
+	// get available categories
+	const categories = appDatabase.getTaskCategories();
 
 	$: taskId = $page.params.id;
 	$: if (taskId) {
@@ -39,6 +43,7 @@
 				editDescription = task.description || '';
 				editAssignedTo = task.assignedTo || '';
 				editStatus = task.status || 'open';
+				editCategory = task.category || 'general';
 			}
 		} catch (err) {
 			error = 'Task not found or failed to load.';
@@ -78,6 +83,7 @@
 			editDescription = task.description || '';
 			editAssignedTo = task.assignedTo || '';
 			editStatus = task.status || 'open';
+			editCategory = task.category || 'general';
 		}
 	}
 
@@ -94,7 +100,8 @@
 				date: editDate,
 				description: editDescription.trim(),
 				assignedTo: editAssignedTo.trim() || null,
-				status: editStatus
+				status: editStatus,
+				category: editCategory
 			};
 
 			await appDatabase.updateDocument(updatedTask);
@@ -117,6 +124,10 @@
 
 	function formatDateTime(dateString) {
 		return new Date(dateString).toLocaleString();
+	}
+
+	function getCategoryInfo(categoryValue) {
+		return categories.find(cat => cat.value === categoryValue) || { value: 'general', label: 'General', icon: '📋' };
 	}
 </script>
 
@@ -170,6 +181,23 @@
 							/>
 						</label>
 
+						<label for="editCategory">
+							Category *
+							<select
+								id="editCategory"
+								name="editCategory"
+								bind:value={editCategory}
+								required
+								disabled={saving}
+							>
+								{#each categories as cat}
+									<option value={cat.value}>{cat.icon} {cat.label}</option>
+								{/each}
+							</select>
+						</label>
+					</div>
+
+					<div class="grid">
 						<label for="editAssignedTo">
 							Assigned To
 							<input
@@ -221,6 +249,11 @@
 			<article>
 				<header>
 					<h1>{task.title}</h1>
+					<div class="task-category">
+						<span class="category-badge" data-category={task.category}>
+							{getCategoryInfo(task.category).icon} {getCategoryInfo(task.category).label}
+						</span>
+					</div>
 					<div class="task-meta">
 						<p><small>Due: {formatDate(task.date)}</small></p>
 						{#if task.assignedTo}
@@ -270,6 +303,87 @@
 		gap: 1rem;
 		justify-content: flex-end;
 		margin-top: 1rem;
+	}
+
+	.task-category {
+		margin: 0.5rem 0;
+	}
+
+	.category-badge {
+		display: inline-block;
+		background: #f8f9fa;
+		border: 1px solid #dee2e6;
+		border-radius: 20px;
+		padding: 0.25rem 0.75rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: #495057;
+	}
+
+	.category-badge[data-category="safety"] {
+		background: #fff3cd;
+		border-color: #ffeaa7;
+		color: #856404;
+	}
+
+	.category-badge[data-category="quality"] {
+		background: #d1edff;
+		border-color: #74c0fc;
+		color: #0c5460;
+	}
+
+	.category-badge[data-category="equipment"] {
+		background: #e2e3e5;
+		border-color: #adb5bd;
+		color: #495057;
+	}
+
+	.category-badge[data-category="materials"] {
+		background: #f8d7da;
+		border-color: #f5c6cb;
+		color: #721c24;
+	}
+
+	.category-badge[data-category="electrical"] {
+		background: #fff3cd;
+		border-color: #ffeaa7;
+		color: #856404;
+	}
+
+	.category-badge[data-category="plumbing"] {
+		background: #cce5ff;
+		border-color: #74c0fc;
+		color: #0c5460;
+	}
+
+	.category-badge[data-category="hvac"] {
+		background: #d4edda;
+		border-color: #c3e6cb;
+		color: #155724;
+	}
+
+	.category-badge[data-category="structural"] {
+		background: #e2e3e5;
+		border-color: #adb5bd;
+		color: #495057;
+	}
+
+	.category-badge[data-category="finishing"] {
+		background: #f8d7da;
+		border-color: #f5c6cb;
+		color: #721c24;
+	}
+
+	.category-badge[data-category="inspection"] {
+		background: #d1ecf1;
+		border-color: #bee5eb;
+		color: #0c5460;
+	}
+
+	.category-badge[data-category="maintenance"] {
+		background: #e2e3e5;
+		border-color: #adb5bd;
+		color: #495057;
 	}
 
 	@media (max-width: 576px) {

@@ -77,6 +77,7 @@ export const appDatabase = {
 				title: task.title,
 				date: task.date,
 				description: task.description,
+				category: task.category || 'general', // task category
 				status: 'open', // default status for new tasks
 				assignedTo: task.assignedTo || null,
 				synced: false,
@@ -332,5 +333,21 @@ export const appDatabase = {
 		}
 
 		return { tasks, reports };
+	},
+
+	// get available task categories
+	getTaskCategories() {
+		return [
+			{ value: 'general', label: 'General', icon: '📋' },
+			{ value: 'safety', label: 'Safety', icon: '🛡️' },
+			{ value: 'quality', label: 'Quality Control', icon: '✅' },
+			{ value: 'equipment', label: 'Equipment', icon: '🔧' },
+			{ value: 'materials', label: 'Materials', icon: '📦' },
+			{ value: 'electrical', label: 'Electrical', icon: '⚡' },
+			{ value: 'plumbing', label: 'Plumbing', icon: '🚰' },
+			{ value: 'structural', label: 'Structural', icon: '🏗️' },
+			{ value: 'inspection', label: 'Inspection', icon: '🔍' },
+			{ value: 'maintenance', label: 'Maintenance', icon: '🔧' }
+		];
 	}
 };

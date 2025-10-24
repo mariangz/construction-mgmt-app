@@ -6,11 +6,15 @@
 	let date = '';
 	let description = '';
 	let assignedTo = '';
+	let category = 'general';
 	let isSubmitting = false;
 	let errorMessage = '';
 
 	// set default date to today
 	date = new Date().toISOString().split('T')[0];
+
+	// get available categories
+	const categories = appDatabase.getTaskCategories();
 
 	async function handleSubmit(event) {
 		event.preventDefault();
@@ -23,7 +27,8 @@
 				title: taskTitle.trim(),
 				date: date,
 				description: description.trim(),
-				assignedTo: assignedTo.trim() || null
+				assignedTo: assignedTo.trim() || null,
+				category: category
 			});
 
 			// Redirect to tasks list after successful creation
@@ -82,6 +87,23 @@
 					/>
 				</label>
 
+				<label for="category">
+					Category *
+					<select
+						id="category"
+						name="category"
+						bind:value={category}
+						required
+						disabled={isSubmitting}
+					>
+						{#each categories as cat}
+							<option value={cat.value}>{cat.icon} {cat.label}</option>
+						{/each}
+					</select>
+				</label>
+			</div>
+
+			<div class="grid">
 				<label for="assignedTo">
 					Assigned To
 					<input
