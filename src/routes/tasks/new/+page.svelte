@@ -1,6 +1,7 @@
 <script>
 	import { appDatabase } from '$lib/db';
 	import { goto } from '$app/navigation';
+	import LocationPicker from '$lib/components/LocationPicker.svelte';
 
 	let taskTitle = '';
 	let date = '';
@@ -9,12 +10,17 @@
 	let category = 'general';
 	let isSubmitting = false;
 	let errorMessage = '';
+	let coords = null;
 
 	// set default date to today
 	date = new Date().toISOString().split('T')[0];
 
 	// get available categories
 	const categories = appDatabase.getTaskCategories();
+
+	function handleSelected(coordsData) {
+		coords = coordsData; // { lat, lng } o null
+	}
 
 	async function handleSubmit(event) {
 		event.preventDefault();
@@ -129,6 +135,13 @@
 					disabled={isSubmitting}
 				></textarea>
 			</label>
+
+			<div>
+				<LocationPicker {coords} onLocationSelected={handleSelected} />
+				{#if coords}
+					<p><strong>Selected:</strong> {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}</p>
+				{/if}
+			</div>
 		</fieldset>
 
 		<div class="actions">
