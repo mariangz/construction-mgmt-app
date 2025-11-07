@@ -98,6 +98,12 @@
 			}, 1500);
 		}
 	}
+
+	function handleCancel() {
+		if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+			goto('/');
+		}
+	}
 </script>
 
 <main class="container">
@@ -178,7 +184,7 @@
 			{/if}
 
 			<div class="actions">
-				<a href="/" role="button" class="secondary">Cancel</a>
+				<button type="button" class="secondary" onclick={handleCancel} disabled={isSaving}>Cancel</button>
 				<button type="submit" disabled={isSaving}>
 					{isSaving ? 'Saving...' : 'Save Settings'}
 				</button>
