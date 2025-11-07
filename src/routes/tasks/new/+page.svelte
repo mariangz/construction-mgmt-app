@@ -46,6 +46,12 @@
 			isSubmitting = false;
 		}
 	}
+
+	function handleCancel() {
+		if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+			goto('/tasks');
+		}
+	}
 </script>
 
 <main class="container">
@@ -145,7 +151,9 @@
 		</fieldset>
 
 		<div class="actions">
-			<a href="/tasks" role="button" class="secondary">Cancel</a>
+			<button type="button" class="secondary" onclick={handleCancel} disabled={isSubmitting}>
+				Cancel
+			</button>
 			<button type="submit" disabled={isSubmitting}>
 				{isSubmitting ? 'Creating Task...' : 'Create Task'}
 			</button>
