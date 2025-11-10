@@ -80,6 +80,7 @@ export const appDatabase = {
 				category: task.category || 'general', // task category
 				status: 'open', // default status for new tasks
 				assignedTo: task.assignedTo || null,
+				coordinates: task.coordinates || null, // location coordinates
 				synced: false,
 				createdAt: now,
 				updatedAt: now,

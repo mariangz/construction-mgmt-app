@@ -34,7 +34,8 @@
 				date: date,
 				description: description.trim(),
 				assignedTo: assignedTo.trim() || null,
-				category: category
+				category: category,
+				coordinates: coords
 			});
 
 			// Redirect to tasks list after successful creation
@@ -142,12 +143,19 @@
 				></textarea>
 			</label>
 
-			<div>
-				<LocationPicker {coords} onLocationSelected={handleSelected} />
-				{#if coords}
-					<p><strong>Selected:</strong> {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}</p>
-				{/if}
-			</div>
+			<label>
+				Location
+				<div>
+					<LocationPicker coordinates={coords} onLocationSelected={handleSelected} />
+					{#if coords}
+						<p class="location-info">
+							📍 Location selected: {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
+						</p>
+					{:else}
+						<p class="location-info">📍 No location selected (optional)</p>
+					{/if}
+				</div>
+			</label>
 		</fieldset>
 
 		<div class="actions">
@@ -186,6 +194,13 @@
 		gap: 1rem;
 		justify-content: flex-end;
 		margin-top: 1rem;
+	}
+
+	.location-info {
+		margin-top: 0.5rem;
+		font-size: 0.9rem;
+		color: #666;
+		font-style: italic;
 	}
 
 	@media (max-width: 576px) {

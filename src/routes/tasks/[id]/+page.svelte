@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { appDatabase } from '$lib/db';
+	import LocationPicker from '$lib/components/LocationPicker.svelte';
 
 	let task = null;
 	let loading = true;
@@ -18,6 +19,7 @@
 	let editAssignedTo = '';
 	let editStatus = 'open';
 	let editCategory = 'general';
+	let editCoords = null;
 
 	// get available categories
 	const categories = appDatabase.getTaskCategories();
@@ -44,6 +46,7 @@
 				editAssignedTo = task.assignedTo || '';
 				editStatus = task.status || 'open';
 				editCategory = task.category || 'general';
+				editCoords = task.coordinates || null;
 			}
 		} catch (err) {
 			error = 'Task not found or failed to load.';
@@ -84,6 +87,7 @@
 			editAssignedTo = task.assignedTo || '';
 			editStatus = task.status || 'open';
 			editCategory = task.category || 'general';
+			editCoords = task.coordinates || null;
 		}
 	}
 
@@ -101,7 +105,8 @@
 				description: editDescription.trim(),
 				assignedTo: editAssignedTo.trim() || null,
 				status: editStatus,
-				category: editCategory
+				category: editCategory,
+				coordinates: editCoords
 			};
 
 			await appDatabase.updateDocument(updatedTask);
@@ -233,6 +238,20 @@
 							disabled={saving}
 						></textarea>
 					</label>
+
+					<label>
+						Location
+						<div>
+							<LocationPicker coordinates={editCoords} onLocationSelected={(coords) => editCoords = coords} />
+							{#if editCoords}
+								<p class="location-info">
+									📍 Location selected: {editCoords.lat.toFixed(6)}, {editCoords.lng.toFixed(6)}
+								</p>
+							{:else}
+								<p class="location-info">📍 No location selected (optional)</p>
+							{/if}
+						</div>
+					</label>
 				</fieldset>
 
 				<div class="actions">
@@ -270,6 +289,17 @@
 					<h3>Description</h3>
 					<p>{task.description}</p>
 				</section>
+
+				{#if task.coordinates && task.coordinates.lat && task.coordinates.lng}
+					<section>
+						<h3>Location</h3>
+						<div class="location-display">
+							<div class="location-map-view">
+								<LocationPicker coordinates={task.coordinates} readonly={true} />
+							</div>
+						</div>
+					</section>
+				{/if}
 
 				<footer>
 					<details>
@@ -384,6 +414,27 @@
 		background: #e2e3e5;
 		border-color: #adb5bd;
 		color: #495057;
+	}
+
+	.location-display {
+		margin-top: 1rem;
+	}
+
+	.location-coords {
+		margin-bottom: 0.5rem;
+		font-size: 0.9rem;
+		color: #666;
+	}
+
+	.location-map-view {
+		margin-top: 0.5rem;
+	}
+
+	.location-info {
+		margin-top: 0.5rem;
+		font-size: 0.9rem;
+		color: #666;
+		font-style: italic;
 	}
 
 	@media (max-width: 576px) {
