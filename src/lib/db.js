@@ -59,6 +59,7 @@ function getDisplayName() {
 	return 'Unknown User';
 }
 
+
 // export object with all database operations
 // tasks
 export const appDatabase = {
@@ -258,12 +259,20 @@ export const appDatabase = {
 
 			// update timestamp
 			doc.updatedAt = new Date().toISOString();
+			doc.updatedBy = getDisplayName();
 
 			// save changes
 			const result = await db.put(doc);
 			console.log('Document updated:', result);
 			return result;
 		} catch (error) {
+			// handle 409 conflict errors
+			if (error.status === 409 || error.name === 'conflict') {
+				console.log('Conflict detected during update:', doc._id);
+				error.name = 'ConflictError';
+				error.docId = doc._id;
+				throw error;
+			}
 			console.error('Error updating document:', error);
 			throw error;
 		}
@@ -291,10 +300,12 @@ export const appDatabase = {
 	// upload any local changes to remote, download any remote changes to local
 	async syncOnce(remoteUrl) {
 		const db = await getDb();
+
 		return db
 			.sync(remoteUrl)
 			.on('change', async (info) => {
 				console.log('Sync change:', info);
+
 				// mark documents as synced when they are synced, use bulkDocs to update multiple documents at once
 				const docsToUpdate = info.change.docs
 					.filter((doc) => (doc.type === 'task' || doc.type === 'report') && !doc.synced)
@@ -308,8 +319,9 @@ export const appDatabase = {
 					await db.bulkDocs(docsToUpdate);
 				}
 			})
-			.on('complete', (info) => {
+			.on('complete', async (info) => {
 				console.log('Sync completed:', info);
+
 			})
 			.on('error', (err) => {
 				console.error('Sync error:', err);
@@ -350,5 +362,104 @@ export const appDatabase = {
 			{ value: 'inspection', label: 'Inspection', icon: '🔍' },
 			{ value: 'maintenance', label: 'Maintenance', icon: '🔧' }
 		];
+	},
+
+
+	// check if a document has conflicts
+	async getConflicts(docId) {
+		try {
+			const db = await getDb();
+			// get document with conflicts info
+			const doc = await db.get(docId, { conflicts: true });
+
+			// check if conflicts exist
+			if (doc._conflicts && doc._conflicts.length > 0) {
+				// get the first conflicting version 
+				const conflictRev = doc._conflicts[0];
+				const conflictVersion = await db.get(docId, { rev: conflictRev });
+
+				return {
+					hasConflicts: true,
+					current: doc,        // current version (from server)
+					conflict: conflictVersion  // conflicting version (local)
+				};
+			}
+
+			return { hasConflicts: false, current: doc };
+		} catch (error) {
+			console.error('Error checking conflicts:', error);
+			throw error;
+		}
+	},
+
+	// resolve conflict by choosing which version to keep
+	async resolveConflict(docId, keepCurrent) {
+		try {
+			const db = await getDb();
+
+			// get current document with conflicts
+			const currentDoc = await db.get(docId, { conflicts: true });
+
+			let chosenVersion;
+			if (keepCurrent) {
+				// keep the current version (from server)
+				chosenVersion = currentDoc;
+			} else {
+				// Keep the conflict version (local)
+				const conflictRev = currentDoc._conflicts[0];
+				chosenVersion = await db.get(docId, { rev: conflictRev });
+			}
+
+			// remove internal fields
+			const cleanVersion = { ...chosenVersion };
+			delete cleanVersion._rev;
+			delete cleanVersion._conflicts;
+			delete cleanVersion._revisions;
+
+			// save the chosen version
+			const resolvedDoc = {
+				...cleanVersion,
+				_id: docId,
+				_rev: currentDoc._rev,  // use latest revision
+				updatedAt: new Date().toISOString(),
+				updatedBy: getDisplayName()
+			};
+
+			await db.put(resolvedDoc);
+
+			// remove the losing revision
+			if (currentDoc._conflicts) {
+				for (const rev of currentDoc._conflicts) {
+					console.log('removing losing revision:', rev);
+					try {
+						await db.remove(docId, rev);
+					} catch {
+						// Ignore if already removed
+					}
+				}
+			}
+
+			console.log('Conflict resolved');
+			return { success: true };
+		} catch (error) {
+			console.error('Error resolving conflict:', error);
+			throw error;
+		}
+	},
+
+	// get count of documents with conflicts
+	async getConflictCount() {
+		try {
+			const db = await getDb();
+			const result = await db.allDocs({ conflicts: true,  include_docs: true  });
+			const conflicts = result.rows.filter(row =>
+				row.doc && row.doc._conflicts && row.doc._conflicts.length > 0
+			);
+			console.log('conflicts', conflicts);
+			return conflicts.length;
+		} catch (error) {
+			console.error('Error getting conflict count:', error);
+			return 0;
+		}
 	}
 };

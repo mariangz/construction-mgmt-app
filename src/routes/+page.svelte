@@ -3,18 +3,21 @@
 	import { appDatabase } from '$lib/db';
 	import { onMount } from 'svelte';
 
-	let syncState = '';
-	let syncMessage = '';
-	let couchdbSettings = null;
-	let isConfigured = false;
-	let unsyncedCounts = { tasks: 0, reports: 0 };
-	let loadingCounts = true;
-	let currentUser = '';
+	let syncState = $state('');
+	let syncMessage = $state('');
+	let couchdbSettings = $state(null);
+	let isConfigured = $state(false);
+	let unsyncedCounts = $state({ tasks: 0, reports: 0 });
+	let loadingCounts = $state(true);
+	let currentUser = $state('');
+	let conflictCount = $state(0);
+	let loadingConflicts = $state(true);
 
 	// load settings when the app starts
 	onMount(() => {
 		loadSettings();
 		loadUnsyncedCounts();
+		loadConflictCount();
 	});
 
 	// load CouchDB settings from browser's localStorage (if they exist)
@@ -45,6 +48,20 @@
 			unsyncedCounts = { tasks: 0, reports: 0 };
 		} finally {
 			loadingCounts = false;
+		}
+	}
+
+	// load conflict count
+	async function loadConflictCount() {
+		try {
+			loadingConflicts = true;
+			conflictCount = await appDatabase.getConflictCount();
+			console.log('conflictCount', conflictCount);
+		} catch (error) {
+			console.error('Error loading conflict count:', error);
+			conflictCount = 0;
+		} finally {
+			loadingConflicts = false;
 		}
 	}
 
@@ -80,6 +97,7 @@
 
 			// reload counts after successful sync
 			loadUnsyncedCounts();
+			loadConflictCount();
 
 		} catch (error) {
 			console.error('Error syncing with CouchDB:', error);
@@ -187,19 +205,35 @@
 	{:else}
 		<div class="unsynced-items">
 			<h2>📊 Sync Status</h2>
-			{#if unsyncedCounts.tasks === 0 && unsyncedCounts.reports === 0}
+			{#if unsyncedCounts.tasks === 0 && unsyncedCounts.reports === 0 && conflictCount === 0}
 				<p class="all-synced">✅ All items are synced</p>
 			{:else}
 				<div class="unsynced-counts">
-					<div class="count-item">
-						<span class="count-number">{unsyncedCounts.tasks}</span>
-						<span class="count-label">Unsynced Tasks</span>
-					</div>
-					<div class="count-item">
-						<span class="count-number">{unsyncedCounts.reports}</span>
-						<span class="count-label">Unsynced Reports</span>
-					</div>
+					{#if unsyncedCounts.tasks > 0}
+						<div class="count-item">
+							<span class="count-number">{unsyncedCounts.tasks}</span>
+							<span class="count-label">Unsynced Tasks</span>
+						</div>
+					{/if}
+					{#if unsyncedCounts.reports > 0}
+						<div class="count-item">
+							<span class="count-number">{unsyncedCounts.reports}</span>
+							<span class="count-label">Unsynced Reports</span>
+						</div>
+					{/if}
+					{#if conflictCount > 0}
+						<div class="count-item conflict-item">
+							<span class="count-number conflict-number">{conflictCount}</span>
+							<span class="count-label">Conflicts</span>
+						</div>
+					{/if}
 				</div>
+				{#if conflictCount > 0}
+					<p class="conflict-warning">
+						⚠️ {conflictCount} document{conflictCount === 1 ? '' : 's'} {conflictCount === 1 ? 'has' : 'have'} conflicts that need resolution.
+						<a href="/tasks">View tasks</a> to resolve them.
+					</p>
+				{/if}
 				{#if isConfigured}
 					<p class="sync-hint">💡 Use the sync button above to sync these items</p>
 				{:else}
@@ -429,6 +463,31 @@
 		font-size: 0.9rem;
 		color: #666;
 		margin-top: 0.5rem;
+	}
+
+	.conflict-item {
+		border-left: 3px solid #ffc107;
+		padding-left: 0.5rem;
+	}
+
+	.conflict-number {
+		color: #ffc107 !important;
+	}
+
+	.conflict-warning {
+		background: #fff3cd;
+		border: 1px solid #ffc107;
+		border-radius: 6px;
+		padding: 0.75rem 1rem;
+		margin-top: 1rem;
+		color: #856404;
+		font-size: 0.95rem;
+	}
+
+	.conflict-warning a {
+		color: #856404;
+		text-decoration: underline;
+		font-weight: 500;
 	}
 
 	@media (max-width: 600px) {

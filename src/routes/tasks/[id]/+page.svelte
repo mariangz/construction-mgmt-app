@@ -1,45 +1,55 @@
 <script>
 	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { appDatabase } from '$lib/db';
 	import LocationPicker from '$lib/components/LocationPicker.svelte';
+	import ConflictResolver from '$lib/components/ConflictResolver.svelte';
 
-	let task = null;
-	let loading = true;
-	let error = null;
-	let deleting = false;
-	let editing = false;
-	let saving = false;
+	let task = $state(null);
+	let loading = $state(true);
+	let error = $state(null);
+	let deleting = $state(false);
+	let editing = $state(false);
+	let saving = $state(false);
+	let hasConflicts = $state(false);
+	let showConflictResolver = $state(false);
 
 	// edit form variables
-	let editTitle = '';
-	let editDate = '';
-	let editDescription = '';
-	let editAssignedTo = '';
-	let editStatus = 'open';
-	let editCategory = 'general';
-	let editCoords = null;
+	let editTitle = $state('');
+	let editDate = $state('');
+	let editDescription = $state('');
+	let editAssignedTo = $state('');
+	let editStatus = $state('open');
+	let editCategory = $state('general');
+	let editCoords = $state(null);
 
 	// get available categories
 	const categories = appDatabase.getTaskCategories();
 
-	$: taskId = $page.params.id;
-	$: if (taskId) {
-		console.log('taskId', taskId);
-		loadTask(taskId);
-	}
+	let taskId = $derived($page.params.id);
+	$effect(() => {
+		if (taskId) {
+			console.log('taskId', taskId);
+			loadTask(taskId);
+		}
+	});
 
 	console.log('page', $page);
-	console.log('taskId', taskId);
 
 	async function loadTask(id) {
 		try {
 			loading = true;
 			error = null;
 			task = await appDatabase.getDocument(id);
-			// initialize edit form with current values
+			
+			// Check for conflicts
 			if (task) {
+				const conflictInfo = await appDatabase.getConflicts(id);
+				hasConflicts = conflictInfo.hasConflicts;
+				// Don't auto-show resolver, show banner first
+				showConflictResolver = false;
+				
+				// initialize edit form with current values
 				editTitle = task.title || '';
 				editDate = task.date || '';
 				editDescription = task.description || '';
@@ -95,8 +105,9 @@
 		event.preventDefault();
 
 		saving = true;
+		error = null;
 
-				try {
+		try {
 			// update the task object with new values
 			const updatedTask = {
 				...task,
@@ -114,10 +125,22 @@
 			task = updatedTask;
 			editing = false;
 
+			// Reload task to check for conflicts
+			await loadTask(taskId);
+
 			console.log('Task updated successfully');
 		} catch (err) {
-			alert('Failed to update task. Please try again.');
-			console.error('Error updating task:', err);
+			// Handle conflict errors
+			if (err.name === 'ConflictError' || err.status === 409) {
+				error = 'This task was modified by another user. Please resolve the conflict.';
+				editing = false;
+				// Reload task to show conflicts
+				await loadTask(err.docId || taskId);
+				showConflictResolver = true;
+			} else {
+				alert('Failed to update task. Please try again.');
+				console.error('Error updating task:', err);
+			}
 		} finally {
 			saving = false;
 		}
@@ -133,6 +156,13 @@
 
 	function getCategoryInfo(categoryValue) {
 		return categories.find(cat => cat.value === categoryValue) || { value: 'general', label: 'General', icon: '📋' };
+	}
+
+	async function handleConflictResolved() {
+		showConflictResolver = false;
+		hasConflicts = false;
+		// Reload the task after conflict resolution
+		await loadTask(taskId);
 	}
 </script>
 
@@ -265,6 +295,23 @@
 			</form>
 		{:else}
 			<!-- view Mode -->
+			{#if showConflictResolver && hasConflicts}
+				<ConflictResolver 
+					docId={taskId} 
+					onResolved={handleConflictResolved}
+				/>
+			{/if}
+
+			{#if hasConflicts && !showConflictResolver}
+				<article class="conflict-banner" role="alert">
+					<strong>⚠️ Conflict Detected</strong>
+					<p>This task has conflicts that need to be resolved.</p>
+					<button onclick={() => showConflictResolver = true} class="outline">
+						Resolve Conflict
+					</button>
+				</article>
+			{/if}
+
 			<article>
 				<header>
 					<h1>{task.title}</h1>
@@ -420,12 +467,6 @@
 		margin-top: 1rem;
 	}
 
-	.location-coords {
-		margin-bottom: 0.5rem;
-		font-size: 0.9rem;
-		color: #666;
-	}
-
 	.location-map-view {
 		margin-top: 0.5rem;
 	}
@@ -435,6 +476,24 @@
 		font-size: 0.9rem;
 		color: #666;
 		font-style: italic;
+	}
+
+	.conflict-banner {
+		background: #fff3cd;
+		border: 2px solid #ffc107;
+		border-radius: 8px;
+		padding: 1rem;
+		margin-bottom: 1rem;
+		color: #856404;
+	}
+
+	.conflict-banner strong {
+		display: block;
+		margin-bottom: 0.5rem;
+	}
+
+	.conflict-banner button {
+		margin-top: 0.5rem;
 	}
 
 	@media (max-width: 576px) {

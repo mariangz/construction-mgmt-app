@@ -2,20 +2,20 @@
 	import { appDatabase } from '$lib/db';
 	import { goto } from '$app/navigation';
 
-	let title = '';
-	let description = '';
-	let reportType = 'inspection';
-	let location = '';
-	let assignedTo = '';
-	let priority = 'medium';
-	let status = 'draft';
-	let dueDate = '';
-	let materials = '';
-	let findings = '';
-	let recommendations = '';
-	let isSubmitting = false;
-	let errorMessage = '';
-	let files = [];
+	let title = $state('');
+	let description = $state('');
+	let reportType = $state('inspection');
+	let location = $state('');
+	let assignedTo = $state('');
+	let priority = $state('medium');
+	let status = $state('draft');
+	let dueDate = $state('');
+	let materials = $state('');
+	let findings = $state('');
+	let recommendations = $state('');
+	let isSubmitting = $state(false);
+	let errorMessage = $state('');
+	let files = $state([]);
 
 	const reportTypes = [
 		{ value: 'inspection', label: 'Inspection Report' },
