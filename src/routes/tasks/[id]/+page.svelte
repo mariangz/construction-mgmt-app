@@ -130,17 +130,8 @@
 
 			console.log('Task updated successfully');
 		} catch (err) {
-			// Handle conflict errors
-			if (err.name === 'ConflictError' || err.status === 409) {
-				error = 'This task was modified by another user. Please resolve the conflict.';
-				editing = false;
-				// Reload task to show conflicts
-				await loadTask(err.docId || taskId);
-				showConflictResolver = true;
-			} else {
-				alert('Failed to update task. Please try again.');
-				console.error('Error updating task:', err);
-			}
+			alert('Failed to update task. Please try again.');
+			console.error('Error updating task:', err);
 		} finally {
 			saving = false;
 		}
