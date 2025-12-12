@@ -242,6 +242,8 @@ export const appDatabase = {
 			// update timestamp
 			doc.updatedAt = new Date().toISOString();
 			doc.updatedBy = getDisplayName();
+			// any local edit makes the doc unsynced again
+			doc.synced = false;
 
 			// save changes
 			const result = await db.put(doc);
