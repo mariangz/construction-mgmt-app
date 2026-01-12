@@ -1,6 +1,6 @@
 # Construction Management App
 
-A modern, offline-first web application for managing construction sites, tasks, and reports. Built with SvelteKit.
+An offline-first web application for managing construction sites, tasks, and reports. Built with SvelteKit.
 
 ## 🚀 Features
 
@@ -16,7 +16,6 @@ A modern, offline-first web application for managing construction sites, tasks, 
 -   **Styling**: [Pico.css](https://picocss.com/)
 -   **Database**: [PouchDB](https://pouchdb.com/) (Offline-first / Browser-based)
 -   **Mapping**: [Leaflet](https://leafletjs.com/)
--   **Build Tool**: [Vite](https://vitejs.dev/)
 
 ## 🏁 Getting Started
 
